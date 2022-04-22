@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Zombies v Medics</title>
     <style>
         body {
             background-color: #666;
@@ -19,41 +19,80 @@
             z-index: 1;
         }
         #controls {
-            position: absolute;
-            top: 0;
-            right: 0;
-            z-index: 2;
-            opacity: .5;
-            padding: .5rem;
             background: white;
             display: flex;
             flex-direction: column;
+            opacity: .5;
+            padding: .5rem;
+            position: absolute;
+            right: 0;
+            top: 0;
             width: 10rem;
+            z-index: 2;
         }
         #controls input {
             width: 100%;
         }
+        .counts {
+            font-size: 21px;
+            font-weight: bold;
+            left: 0;
+            opacity: .7;
+            padding: 10px;
+            position: absolute;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+            top: 0;
+            z-index: 2;
+        }
+        .zombie-count {
+            color: #900;
+        }
+        .medic-count {
+            color: #0b0;
+        }
+        .civilian-count {
+            color: #aaa;
+        }
     </style>
 </head>
-<body>
+<body x-data="{civilianCount:100, medicCount: 5, zombieCount: 200, resolutionScale: 1}">
     <canvas id="canvas"></canvas>
     <div id="controls">
+        <button id="toggleControlsBtn" type="button">HIDE</button>
         <div>
-            <label for="civilianCount">Civilians</label>
-            <input type="text" id="civilianCount" value="100">
-        </div>
-        <div>
-            <label for="medicCount">Medics</label>
-            <input type="text" id="medicCount" value="5">
-        </div>
-        <div>
-            <label for="zombieCount">Zombies</label>
-            <input type="text" id="zombieCount" value="200">
-        </div>
+            <div>
+                <label for="civilianCount">Civilians [<span x-text="civilianCount"></span>]</label>
+                <input type="range" id="civilianCount" min="0" max="2000" x-model="civilianCount" x-on:input="reset()">
+            </div>
+            <div>
+                <label for="medicCount">Medics [<span x-text="medicCount"></span>]</label>
+                <input type="range" id="medicCount" min="0" max="2000" x-model="medicCount" x-on:input="reset()">
+            </div>
+            <div>
+                <label for="zombieCount">Zombies [<span x-text="zombieCount"></span>]</label>
+                <input type="range" id="zombieCount" min="0" max="2000" x-model="zombieCount" x-on:input="reset()">
+            </div>
+            <div>
+                <label for="resolutionScale">Resolution Scale [<span x-text="resolutionScale"></span>]</label>
+                <input type="range" id="resolutionScale" min="1" max="10" x-model="resolutionScale" x-on:input="reset();">
+            </div>
 
-        <button id="pauseButton">Pause/Play</button>
-        <button id="resetButton">Reset</button>
+            <button id="pauseButton">Pause/Play</button>
+            <button id="resetButton">Reset</button>
+        </div>
     </div>
+    <div class="counts">
+        <div class="zombie-count">
+            <span id="zombieCountOutput">0</span> zombies
+        </div>
+        <div class="medic-count">
+            <span id="medicCountOutput">0</span> medics
+        </div>
+        <div class="civilian-count">
+            <span id="civilianCountOutput">0</span> civilians
+        </div>
+    </div>
+    <script src="alpine.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
