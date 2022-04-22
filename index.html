@@ -53,46 +53,52 @@
         .civilian-count {
             color: #aaa;
         }
+        .corpse-count {
+            color: #b62;
+        }
     </style>
 </head>
-<body x-data="{civilianCount:100, medicCount: 5, zombieCount: 200, resolutionScale: 1}">
+<body x-data="game">
     <canvas id="canvas"></canvas>
     <div id="controls">
         <!-- <button id="toggleControlsBtn" type="button">HIDE</button> -->
         <div>
             <div>
-                <label for="civilianCount">Civilians [<span x-text="civilianCount"></span>]</label>
-                <input type="range" id="civilianCount" min="0" max="2000" x-model="civilianCount" x-on:input="reset()">
+                <label for="numCivilians">Civilians [<span x-text="numCivilians"></span>]</label>
+                <input type="range" id="numCivilians" min="0" max="2000" x-model="numCivilians" x-on:input="reset">
             </div>
             <div>
-                <label for="medicCount">Medics [<span x-text="medicCount"></span>]</label>
-                <input type="range" id="medicCount" min="0" max="2000" x-model="medicCount" x-on:input="reset()">
+                <label for="numMedics">Medics [<span x-text="numMedics"></span>]</label>
+                <input type="range" id="numMedics" min="0" max="2000" x-model="numMedics" x-on:input="reset">
             </div>
             <div>
-                <label for="zombieCount">Zombies [<span x-text="zombieCount"></span>]</label>
-                <input type="range" id="zombieCount" min="0" max="2000" x-model="zombieCount" x-on:input="reset()">
+                <label for="numZombies">Zombies [<span x-text="numZombies"></span>]</label>
+                <input type="range" id="numZombies" min="0" max="2000" x-model="numZombies" x-on:input="reset">
             </div>
             <div>
                 <label for="resolutionScale">Resolution Scale [<span x-text="resolutionScale"></span>]</label>
-                <input type="range" id="resolutionScale" min="1" max="10" x-model="resolutionScale" x-on:input="reset();">
+                <input type="range" id="resolutionScale" min="1" max="10" x-model="resolutionScale" x-on:input="reset">
             </div>
 
-            <button id="pauseButton">Pause/Play</button>
-            <button id="resetButton">Reset</button>
+            <button @click.prevent="togglePlay">Pause/Play</button>
+            <button @click.prevent="reset">Reset</button>
         </div>
     </div>
     <div class="counts">
         <div class="zombie-count">
-            <span id="zombieCountOutput">0</span> zombies
+            <span x-text="zombieCount"></span> zombies
         </div>
         <div class="medic-count">
-            <span id="medicCountOutput">0</span> medics
+            <span x-text="medicCount"></span> medics
         </div>
         <div class="civilian-count">
-            <span id="civilianCountOutput">0</span> civilians
+            <span x-text="civilianCount"></span> civilians
+        </div>
+        <div class="corpse-count">
+            <span x-text="corpseCount"></span> corpses
         </div>
     </div>
-    <script src="alpine.js"></script>
     <script src="main.js"></script>
+    <script src="alpine.js"></script>
 </body>
 </html>
