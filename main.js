@@ -68,40 +68,16 @@ function reset() {
 
 function updateScale(e) {
   boardWidth = window.innerWidth / resolutionScale;
-  boardHeight = window.innerWidth / resolutionScale;
+  boardHeight = window.innerHeight / resolutionScale;
   ctx.canvas.width = boardWidth;
   ctx.canvas.height = boardHeight;
-  console.log(e, resolutionScale, boardWidth);
 }
-
-// Clear the console for performance
-// window.setInterval(() => {
-//   if (play === true) {
-//     console.clear();
-//   }
-// }, 10000);
-
-window.setInterval(() => {
-  let zombies = 0;
-  let civilians = 0;
-  let medics = 0;
-
-  board.forEach((item) => {
-    if (item.value === ZOMBIE) zombies++;
-    if (item.value === CIVILIAN) civilians++;
-    if (item.value === MEDIC) medics++;
-  });
-
-  console.log({
-    zombies,
-    civilians,
-    medics,
-  });
-}, 5000);
 
 window.setInterval(() => {
   drawBoard(board);
 }, renderTickRateMS);
+
+window.setInterval(updateCounts, 128);
 
 loop();
 
@@ -164,43 +140,48 @@ function loop() {
 
     switch (item.value) {
       case CIVILIAN:
-        // If there's a medic nearby, you learn
-        if (nearbys[MEDIC] > 1) {
-          // console.info("CIVILIAN LEVELLED UP!");
-          item.value = MEDIC;
-          item.cooldown = cooldownTime;
-        }
-
-        // If there are zombies but not enough civilians, you got got
-        if (nearbys[ZOMBIE] > 1) {
-          // console.error("CIVILIAN GOT ETT!");
-          item.value = ZOMBIE;
-          item.cooldown = cooldownTime;
-        }
-
+        updateCivilian(item, nearbys);
         break;
       case MEDIC:
-        // If there are zombies nearby and not enough civilians, you get got
-        if (nearbys[ZOMBIE] > 1 && nearbys[CIVILIAN] < 1) {
-          // console.error("MEDIC GOT GOT");
-          item.value = ZOMBIE;
-          item.cooldown = cooldownTime;
-        }
+        updateMedic(item, nearbys);
         break;
       case ZOMBIE:
-        if (nearbys[MEDIC] > 0) {
-          // console.warn("ZOMBIE GOT SAVED");
-          item.value = CIVILIAN;
-          item.cooldown = cooldownTime;
-        }
+        updateZombie(item, nearbys);
         break;
     }
   });
 
-  updateCounts();
-
   if (play === true) {
     window.setTimeout(loop, gameTickRateMS);
+  }
+}
+
+function updateCivilian(item, nearbys) {
+  // If there's a medic nearby, you learn
+  if (nearbys[MEDIC] > 1) {
+    item.value = MEDIC;
+    item.cooldown = cooldownTime;
+  }
+
+  // If there are zombies but not enough civilians, you got got
+  if (nearbys[ZOMBIE] > 1) {
+    item.value = ZOMBIE;
+    item.cooldown = cooldownTime;
+  }
+}
+
+function updateMedic(item, nearbys) {
+  // If there are zombies nearby and not enough civilians, you get got
+  if (nearbys[ZOMBIE] > 1 && nearbys[CIVILIAN] < 1) {
+    item.value = ZOMBIE;
+    item.cooldown = cooldownTime;
+  }
+}
+
+function updateZombie(item, nearbys) {
+  if (nearbys[MEDIC] > 0) {
+    item.value = CIVILIAN;
+    item.cooldown = cooldownTime;
   }
 }
 
@@ -264,10 +245,10 @@ function drawItem(item) {
       break;
   }
 
-  // ctx.fillRect(item.x, item.y, bodyScale, bodyScale);
-  ctx.beginPath();
-  ctx.arc(item.x, item.y, bodyScale, 0, 2 * Math.PI);
-  ctx.fill();
+  ctx.fillRect(item.x, item.y, bodyScale, bodyScale);
+  // ctx.beginPath();
+  // ctx.arc(item.x, item.y, bodyScale, 0, 2 * Math.PI);
+  // ctx.fill();
 }
 
 function updateCounts() {

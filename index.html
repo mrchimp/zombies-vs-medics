@@ -28,7 +28,7 @@
             right: 0;
             top: 0;
             width: 10rem;
-            z-index: 2;
+            z-index: 3;
         }
         #controls input {
             width: 100%;
@@ -58,7 +58,7 @@
 <body x-data="{civilianCount:100, medicCount: 5, zombieCount: 200, resolutionScale: 1}">
     <canvas id="canvas"></canvas>
     <div id="controls">
-        <button id="toggleControlsBtn" type="button">HIDE</button>
+        <!-- <button id="toggleControlsBtn" type="button">HIDE</button> -->
         <div>
             <div>
                 <label for="civilianCount">Civilians [<span x-text="civilianCount"></span>]</label>
