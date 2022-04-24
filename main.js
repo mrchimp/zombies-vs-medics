@@ -1,15 +1,14 @@
-let resolutionScale = 1;
+let resolutionScale = 2;
 let boardWidth;
 let boardHeight;
 const gameTickRateMS = 32;
 const renderTickRateMS = 32;
-const cooldownTime = 50;
-let numCivilians = 1000;
-let numZombies = 500;
-let numMedics = 50;
+let numCivilians = 100;
+let numZombies = 50;
+let numMedics = 5;
 let bodyScale = 3;
 const nearbyRange = bodyScale * 3;
-const EMPTY = 0;
+const CORPSE = 0;
 const CIVILIAN = 1;
 const ZOMBIE = 2;
 const MEDIC = 3;
@@ -27,6 +26,7 @@ document.getElementById("zombieCount").value = numZombies;
 document.getElementById("medicCount").value = numMedics;
 document.getElementById("resolutionScale").value = resolutionScale;
 
+const corpseCountOutput = document.getElementById("corpseCountOutput");
 const civilianCountOutput = document.getElementById("civilianCountOutput");
 const zombieCountOutput = document.getElementById("zombieCountOutput");
 const medicCountOutput = document.getElementById("medicCountOutput");
@@ -93,7 +93,7 @@ function countNearby(x, y) {
   const results = {
     [CIVILIAN]: 0,
     [ZOMBIE]: 0,
-    [EMPTY]: 0,
+    [CORPSE]: 0,
     [MEDIC]: 0,
     null: 0,
   };
@@ -139,6 +139,9 @@ function loop() {
     const nearbys = countNearby(item.x, item.y);
 
     switch (item.value) {
+      case CORPSE:
+        updateCorpse(item, nearbys);
+        break;
       case CIVILIAN:
         updateCivilian(item, nearbys);
         break;
@@ -156,17 +159,28 @@ function loop() {
   }
 }
 
+function updateCorpse(item, nearbys) {
+  if (item.cooldown === 0) {
+    item.value = ZOMBIE;
+  }
+}
+
 function updateCivilian(item, nearbys) {
   // If there's a medic nearby, you learn
-  if (nearbys[MEDIC] > 1) {
+  if (nearbys[MEDIC] > 0) {
+    item.training++;
+  }
+
+  if (item.training > 100) {
     item.value = MEDIC;
-    item.cooldown = cooldownTime;
+    return;
   }
 
   // If there are zombies but not enough civilians, you got got
   if (nearbys[ZOMBIE] > 1) {
-    item.value = ZOMBIE;
-    item.cooldown = cooldownTime;
+    item.value = CORPSE;
+    item.cooldown = 200;
+    return;
   }
 }
 
@@ -174,14 +188,14 @@ function updateMedic(item, nearbys) {
   // If there are zombies nearby and not enough civilians, you get got
   if (nearbys[ZOMBIE] > 1 && nearbys[CIVILIAN] < 1) {
     item.value = ZOMBIE;
-    item.cooldown = cooldownTime;
+    item.cooldown = 50;
   }
 }
 
 function updateZombie(item, nearbys) {
   if (nearbys[MEDIC] > 0) {
     item.value = CIVILIAN;
-    item.cooldown = cooldownTime;
+    item.cooldown = 50;
   }
 }
 
@@ -204,6 +218,7 @@ function fillBoardRandomly(board) {
       velY: Math.floor(Math.random() * 3) - 1,
       value: CIVILIAN,
       cooldown: 0,
+      training: 0,
     });
   }
 
@@ -215,6 +230,7 @@ function fillBoardRandomly(board) {
       velY: Math.floor(Math.random() * 3) - 1,
       value: ZOMBIE,
       cooldown: 0,
+      training: 0,
     });
   }
 
@@ -226,6 +242,7 @@ function fillBoardRandomly(board) {
       velY: Math.floor(Math.random() * 3) - 1,
       value: MEDIC,
       cooldown: 0,
+      training: 100,
     });
   }
 
@@ -234,6 +251,9 @@ function fillBoardRandomly(board) {
 
 function drawItem(item) {
   switch (item.value) {
+    case CORPSE:
+      ctx.fillStyle = "#632";
+      break;
     case CIVILIAN:
       ctx.fillStyle = "#999";
       break;
@@ -256,24 +276,26 @@ function updateCounts() {
     [CIVILIAN]: 0,
     [MEDIC]: 0,
     [ZOMBIE]: 0,
+    [CORPSE]: 0,
   };
+
+  let scaleFactor = board.length / 250;
 
   board.forEach((item) => {
     counts[item.value]++;
   });
 
+  corpseCountOutput.innerHTML = counts[CORPSE];
+  corpseCountOutput.style.fontSize = `${20 + counts[CORPSE] / scaleFactor}px`;
+
   civilianCountOutput.innerHTML = counts[CIVILIAN];
   civilianCountOutput.style.fontSize = `${
-    20 + counts[CIVILIAN] / (board.length / 250)
+    20 + counts[CIVILIAN] / scaleFactor
   }px`;
 
   zombieCountOutput.innerHTML = counts[ZOMBIE];
-  zombieCountOutput.style.fontSize = `${
-    20 + counts[ZOMBIE] / (board.length / 250)
-  }px`;
+  zombieCountOutput.style.fontSize = `${20 + counts[ZOMBIE] / scaleFactor}px`;
 
   medicCountOutput.innerHTML = counts[MEDIC];
-  medicCountOutput.style.fontSize = `${
-    20 + counts[MEDIC] / (board.length / 250)
-  }px`;
+  medicCountOutput.style.fontSize = `${20 + counts[MEDIC] / scaleFactor}px`;
 }

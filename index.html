@@ -53,6 +53,9 @@
         .civilian-count {
             color: #aaa;
         }
+        .corpse-count {
+            color: #932;
+        }
     </style>
 </head>
 <body x-data="{civilianCount:100, medicCount: 5, zombieCount: 200, resolutionScale: 1}">
@@ -82,6 +85,9 @@
         </div>
     </div>
     <div class="counts">
+        <div class="corpse-count">
+            <span id="corpseCountOutput">0</span> corpses
+        </div>
         <div class="zombie-count">
             <span id="zombieCountOutput">0</span> zombies
         </div>
