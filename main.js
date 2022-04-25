@@ -1,4 +1,4 @@
-let resolutionScale = 2;
+let resolutionScale = 3;
 let boardWidth;
 let boardHeight;
 const gameTickRateMS = 32;
@@ -6,13 +6,25 @@ const renderTickRateMS = 32;
 let numCivilians = 100;
 let numZombies = 50;
 let numMedics = 5;
+let numCorpses = 0;
 let bodyScale = 3;
-const nearbyRange = bodyScale * 3;
+let graphTickCount = 0;
+const bodyShape = "rect";
+const nearbyRange = bodyScale * 2;
+const BG = -1;
 const CORPSE = 0;
 const CIVILIAN = 1;
 const ZOMBIE = 2;
 const MEDIC = 3;
+const wobble = true;
 let play = true;
+const colors = {
+  [CORPSE]: "#632",
+  [CIVILIAN]: "#999",
+  [ZOMBIE]: "#f00",
+  [MEDIC]: "#0f0",
+  [BG]: "#000",
+};
 const c = document.getElementById("canvas");
 const ctx = c.getContext("2d");
 updateScale();
@@ -20,6 +32,8 @@ ctx.canvas.width = boardWidth;
 ctx.canvas.height = boardHeight;
 ctx.imageSmoothingEnabled = false;
 ctx.mozImageSmoothingEnabled = false;
+ctx.fillStyle = "#111";
+ctx.fillRect(0, 0, boardWidth, boardHeight);
 
 document.getElementById("civilianCount").value = numCivilians;
 document.getElementById("zombieCount").value = numZombies;
@@ -62,7 +76,8 @@ function reset() {
   updateScale();
   board = [];
   board = fillBoardRandomly(board);
-  clearBoard();
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0, 0, boardWidth, boardHeight);
   drawBoard(board, ctx);
 }
 
@@ -78,6 +93,35 @@ window.setInterval(() => {
 }, renderTickRateMS);
 
 window.setInterval(updateCounts, 128);
+
+window.setInterval(() => {
+  if (!play) {
+    return;
+  }
+
+  graphTickCount = (graphTickCount + 1) % boardWidth;
+
+  let y = boardHeight - totalEntities();
+  const counts = countItems();
+
+  ctx.fillStyle = colors[CIVILIAN];
+  ctx.fillRect(graphTickCount, y, 1, counts[CIVILIAN]);
+
+  y += counts[CIVILIAN];
+
+  ctx.fillStyle = colors[MEDIC];
+  ctx.fillRect(graphTickCount, y, 1, counts[MEDIC]);
+
+  y += counts[MEDIC];
+
+  ctx.fillStyle = colors[CORPSE];
+  ctx.fillRect(graphTickCount, y, 1, counts[CORPSE]);
+
+  y += counts[CORPSE];
+
+  ctx.fillStyle = colors[ZOMBIE];
+  ctx.fillRect(graphTickCount, y, 1, counts[ZOMBIE]);
+}, 200);
 
 loop();
 
@@ -111,10 +155,22 @@ function countNearby(x, y) {
   return results;
 }
 
+function totalEntities() {
+  return numCivilians + numCorpses + numMedics + numZombies;
+}
+
 function loop() {
   board.forEach((item) => {
-    let xDelta = Math.floor(Math.random() * 3) - 1;
-    let yDelta = Math.floor(Math.random() * 3) - 1;
+    let xDelta;
+    let yDelta;
+
+    if (wobble) {
+      xDelta = Math.random() * 2 - 1;
+      yDelta = Math.random() * 2 - 1;
+    } else {
+      xDelta = 0;
+      yDelta = 0;
+    }
 
     xDelta += item.velX;
     yDelta += item.velY;
@@ -134,7 +190,8 @@ function loop() {
     if (item.x === 0) item.velX = 1;
     if (item.x === boardWidth - 1) item.velX = -1;
     if (item.y === 0) item.velY = 1;
-    if (item.y === boardHeight - 1) item.velY = -1;
+    // if (item.y === boardHeight - 1) item.velY = -1;
+    if (item.y > boardHeight - totalEntities() - bodyScale * 2) item.velY = -1;
 
     const nearbys = countNearby(item.x, item.y);
 
@@ -162,23 +219,35 @@ function loop() {
 function updateCorpse(item, nearbys) {
   if (item.cooldown === 0) {
     item.value = ZOMBIE;
+    item.velX = randomVel();
+    item.velY = randomVel();
+  }
+
+  if (nearbys[MEDIC] > 0) {
+    item.value = CIVILIAN;
+    item.velX = randomVel();
+    item.velY = randomVel();
   }
 }
 
 function updateCivilian(item, nearbys) {
   // If there's a medic nearby, you learn
   if (nearbys[MEDIC] > 0) {
-    item.training++;
+    item.training += nearbys[MEDIC];
   }
 
   if (item.training > 100) {
     item.value = MEDIC;
+    item.velX = randomVel();
+    item.velY = randomVel();
     return;
   }
 
   // If there are zombies but not enough civilians, you got got
-  if (nearbys[ZOMBIE] > 1) {
+  if (nearbys[ZOMBIE] > 0) {
     item.value = CORPSE;
+    item.velX = randomVel();
+    item.velY = randomVel();
     item.cooldown = 200;
     return;
   }
@@ -188,6 +257,8 @@ function updateMedic(item, nearbys) {
   // If there are zombies nearby and not enough civilians, you get got
   if (nearbys[ZOMBIE] > 1 && nearbys[CIVILIAN] < 1) {
     item.value = ZOMBIE;
+    item.velX = randomVel();
+    item.velY = randomVel();
     item.cooldown = 50;
   }
 }
@@ -195,13 +266,15 @@ function updateMedic(item, nearbys) {
 function updateZombie(item, nearbys) {
   if (nearbys[MEDIC] > 0) {
     item.value = CIVILIAN;
+    item.velX = randomVel();
+    item.velY = randomVel();
     item.cooldown = 50;
   }
 }
 
 function clearBoard(board) {
-  ctx.fillStyle = "#111";
-  ctx.fillRect(0, 0, boardWidth, boardHeight);
+  ctx.fillStyle = colors[BG];
+  ctx.fillRect(0, 0, boardWidth, boardHeight - totalEntities());
 }
 
 function drawBoard(board) {
@@ -209,13 +282,17 @@ function drawBoard(board) {
   board.forEach(drawItem);
 }
 
+function randomVel() {
+  return Math.floor(Math.random() * 3) - 1;
+}
+
 function fillBoardRandomly(board) {
   for (let i = 0; i < numCivilians; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight),
-      velX: Math.floor(Math.random() * 3) - 1,
-      velY: Math.floor(Math.random() * 3) - 1,
+      y: Math.floor(Math.random() * boardHeight - totalEntities()),
+      velX: randomVel(),
+      velY: randomVel(),
       value: CIVILIAN,
       cooldown: 0,
       training: 0,
@@ -225,9 +302,9 @@ function fillBoardRandomly(board) {
   for (let i = 0; i < numZombies; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight),
-      velX: Math.floor(Math.random() * 3) - 1,
-      velY: Math.floor(Math.random() * 3) - 1,
+      y: Math.floor(Math.random() * boardHeight - totalEntities()),
+      velX: randomVel(),
+      velY: randomVel(),
       value: ZOMBIE,
       cooldown: 0,
       training: 0,
@@ -237,12 +314,24 @@ function fillBoardRandomly(board) {
   for (let i = 0; i < numMedics; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight),
-      velX: Math.floor(Math.random() * 3) - 1,
-      velY: Math.floor(Math.random() * 3) - 1,
+      y: Math.floor(Math.random() * boardHeight - totalEntities()),
+      velX: randomVel(),
+      velY: randomVel(),
       value: MEDIC,
       cooldown: 0,
       training: 100,
+    });
+  }
+
+  for (let i = 0; i < numCorpses; i++) {
+    board.push({
+      x: Math.floor(Math.random() * boardWidth),
+      y: Math.floor(Math.random() * boardHeight - totalEntities()),
+      velX: randomVel(),
+      velY: randomVel(),
+      value: CORPSE,
+      cooldown: 2000,
+      training: 0,
     });
   }
 
@@ -250,28 +339,17 @@ function fillBoardRandomly(board) {
 }
 
 function drawItem(item) {
-  switch (item.value) {
-    case CORPSE:
-      ctx.fillStyle = "#632";
-      break;
-    case CIVILIAN:
-      ctx.fillStyle = "#999";
-      break;
-    case ZOMBIE:
-      ctx.fillStyle = "#f00";
-      break;
-    case MEDIC:
-      ctx.fillStyle = "#0f0";
-      break;
+  if (bodyShape === "rect") {
+    ctx.fillStyle = colors[item.value];
+    ctx.fillRect(item.x, item.y, bodyScale, bodyScale);
+  } else {
+    ctx.beginPath();
+    ctx.arc(item.x, item.y, bodyScale, 0, 2 * Math.PI);
+    ctx.fill();
   }
-
-  ctx.fillRect(item.x, item.y, bodyScale, bodyScale);
-  // ctx.beginPath();
-  // ctx.arc(item.x, item.y, bodyScale, 0, 2 * Math.PI);
-  // ctx.fill();
 }
 
-function updateCounts() {
+function countItems() {
   const counts = {
     [CIVILIAN]: 0,
     [MEDIC]: 0,
@@ -279,11 +357,17 @@ function updateCounts() {
     [CORPSE]: 0,
   };
 
-  let scaleFactor = board.length / 250;
-
   board.forEach((item) => {
     counts[item.value]++;
   });
+
+  return counts;
+}
+
+function updateCounts() {
+  let scaleFactor = board.length / 250;
+
+  counts = countItems();
 
   corpseCountOutput.innerHTML = counts[CORPSE];
   corpseCountOutput.style.fontSize = `${20 + counts[CORPSE] / scaleFactor}px`;
