@@ -1,385 +1,412 @@
-let resolutionScale = 3;
-let boardWidth;
-let boardHeight;
-const gameTickRateMS = 32;
-const renderTickRateMS = 32;
-let numCivilians = 100;
-let numZombies = 50;
-let numMedics = 5;
-let numCorpses = 0;
-let bodyScale = 3;
-let graphTickCount = 0;
-const bodyShape = "rect";
-const nearbyRange = bodyScale * 2;
-const BG = -1;
-const CORPSE = 0;
-const CIVILIAN = 1;
-const ZOMBIE = 2;
-const MEDIC = 3;
-const wobble = true;
-let play = true;
-const colors = {
-  [CORPSE]: "#632",
-  [CIVILIAN]: "#999",
-  [ZOMBIE]: "#f00",
-  [MEDIC]: "#0f0",
-  [BG]: "#000",
-};
-const c = document.getElementById("canvas");
-const ctx = c.getContext("2d");
-updateScale();
-ctx.canvas.width = boardWidth;
-ctx.canvas.height = boardHeight;
-ctx.imageSmoothingEnabled = false;
-ctx.mozImageSmoothingEnabled = false;
-ctx.fillStyle = "#111";
-ctx.fillRect(0, 0, boardWidth, boardHeight);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-document.getElementById("civilianCount").value = numCivilians;
-document.getElementById("zombieCount").value = numZombies;
-document.getElementById("medicCount").value = numMedics;
-document.getElementById("resolutionScale").value = resolutionScale;
+const geometry = new THREE.BoxGeometry();
+const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+camera.position.z = 5;
 
-const corpseCountOutput = document.getElementById("corpseCountOutput");
-const civilianCountOutput = document.getElementById("civilianCountOutput");
-const zombieCountOutput = document.getElementById("zombieCountOutput");
-const medicCountOutput = document.getElementById("medicCountOutput");
+function animate() {
+  requestAnimationFrame(animate);
 
-let board = [];
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.011;
 
-board = fillBoardRandomly(board);
-
-drawBoard(board, ctx);
-
-document.getElementById("pauseButton").addEventListener("click", (e) => {
-  e.preventDefault();
-
-  if (play === true) {
-    play = false;
-  } else {
-    play = true;
-    loop();
-  }
-});
-
-document.getElementById("resetButton").addEventListener("click", (e) => {
-  e.preventDefault();
-  reset();
-});
-
-function reset() {
-  numCivilians = document.getElementById("civilianCount").value;
-  numZombies = document.getElementById("zombieCount").value;
-  numMedics = document.getElementById("medicCount").value;
-  resolutionScale = document.getElementById("resolutionScale").value;
-
-  updateScale();
-  board = [];
-  board = fillBoardRandomly(board);
-  ctx.fillStyle = "#111";
-  ctx.fillRect(0, 0, boardWidth, boardHeight);
-  drawBoard(board, ctx);
+  renderer.render(scene, camera);
 }
+animate();
 
-function updateScale(e) {
-  boardWidth = window.innerWidth / resolutionScale;
-  boardHeight = window.innerHeight / resolutionScale;
-  ctx.canvas.width = boardWidth;
-  ctx.canvas.height = boardHeight;
-}
+// let resolutionScale = 3;
+// let boardWidth;
+// let boardHeight;
+// const gameTickRateMS = 32;
+// const renderTickRateMS = 32;
+// let numCivilians = 100;
+// let numZombies = 50;
+// let numMedics = 5;
+// let numCorpses = 0;
+// let bodyScale = 3;
+// let graphTickCount = 0;
+// const bodyShape = "rect";
+// const nearbyRange = bodyScale * 2;
+// const BG = -1;
+// const CORPSE = 0;
+// const CIVILIAN = 1;
+// const ZOMBIE = 2;
+// const MEDIC = 3;
+// const wobble = true;
+// let play = true;
+// const colors = {
+//   [CORPSE]: "#632",
+//   [CIVILIAN]: "#999",
+//   [ZOMBIE]: "#f00",
+//   [MEDIC]: "#0f0",
+//   [BG]: "#000",
+// };
+// const c = document.getElementById("canvas");
+// const ctx = c.getContext("2d");
+// updateScale();
+// ctx.canvas.width = boardWidth;
+// ctx.canvas.height = boardHeight;
+// ctx.imageSmoothingEnabled = false;
+// ctx.mozImageSmoothingEnabled = false;
+// ctx.fillStyle = "#111";
+// ctx.fillRect(0, 0, boardWidth, boardHeight);
 
-window.setInterval(() => {
-  drawBoard(board);
-}, renderTickRateMS);
+// document.getElementById("civilianCount").value = numCivilians;
+// document.getElementById("zombieCount").value = numZombies;
+// document.getElementById("medicCount").value = numMedics;
+// document.getElementById("resolutionScale").value = resolutionScale;
 
-window.setInterval(updateCounts, 128);
+// const corpseCountOutput = document.getElementById("corpseCountOutput");
+// const civilianCountOutput = document.getElementById("civilianCountOutput");
+// const zombieCountOutput = document.getElementById("zombieCountOutput");
+// const medicCountOutput = document.getElementById("medicCountOutput");
 
-window.setInterval(() => {
-  if (!play) {
-    return;
-  }
+// let board = [];
 
-  graphTickCount = (graphTickCount + 1) % boardWidth;
+// board = fillBoardRandomly(board);
 
-  let y = boardHeight - totalEntities();
-  const counts = countItems();
+// drawBoard(board, ctx);
 
-  ctx.fillStyle = colors[CIVILIAN];
-  ctx.fillRect(graphTickCount, y, 1, counts[CIVILIAN]);
+// document.getElementById("pauseButton").addEventListener("click", (e) => {
+//   e.preventDefault();
 
-  y += counts[CIVILIAN];
+//   if (play === true) {
+//     play = false;
+//   } else {
+//     play = true;
+//     loop();
+//   }
+// });
 
-  ctx.fillStyle = colors[MEDIC];
-  ctx.fillRect(graphTickCount, y, 1, counts[MEDIC]);
+// document.getElementById("resetButton").addEventListener("click", (e) => {
+//   e.preventDefault();
+//   reset();
+// });
 
-  y += counts[MEDIC];
+// function reset() {
+//   numCivilians = document.getElementById("civilianCount").value;
+//   numZombies = document.getElementById("zombieCount").value;
+//   numMedics = document.getElementById("medicCount").value;
+//   resolutionScale = document.getElementById("resolutionScale").value;
 
-  ctx.fillStyle = colors[CORPSE];
-  ctx.fillRect(graphTickCount, y, 1, counts[CORPSE]);
+//   updateScale();
+//   board = [];
+//   board = fillBoardRandomly(board);
+//   ctx.fillStyle = "#111";
+//   ctx.fillRect(0, 0, boardWidth, boardHeight);
+//   drawBoard(board, ctx);
+// }
 
-  y += counts[CORPSE];
+// function updateScale(e) {
+//   boardWidth = window.innerWidth / resolutionScale;
+//   boardHeight = window.innerHeight / resolutionScale;
+//   ctx.canvas.width = boardWidth;
+//   ctx.canvas.height = boardHeight;
+// }
 
-  ctx.fillStyle = colors[ZOMBIE];
-  ctx.fillRect(graphTickCount, y, 1, counts[ZOMBIE]);
-}, 200);
+// window.setInterval(() => {
+//   drawBoard(board);
+// }, renderTickRateMS);
 
-loop();
+// window.setInterval(updateCounts, 128);
 
-function limitX(x) {
-  return Math.max(Math.min(x, boardWidth - 1), 0);
-}
+// window.setInterval(() => {
+//   if (!play) {
+//     return;
+//   }
 
-function limitY(x) {
-  return Math.max(Math.min(x, boardHeight - 1), 0);
-}
+//   graphTickCount = (graphTickCount + 1) % boardWidth;
 
-function countNearby(x, y) {
-  const results = {
-    [CIVILIAN]: 0,
-    [ZOMBIE]: 0,
-    [CORPSE]: 0,
-    [MEDIC]: 0,
-    null: 0,
-  };
+//   let y = boardHeight - totalEntities();
+//   const counts = countItems();
 
-  board.forEach((item) => {
-    if (item.cooldown > 0) return;
-    if (item.x < x - nearbyRange) return;
-    if (item.x > x + nearbyRange) return;
-    if (item.y < y - nearbyRange) return;
-    if (item.y > y + nearbyRange) return;
+//   ctx.fillStyle = colors[CIVILIAN];
+//   ctx.fillRect(graphTickCount, y, 1, counts[CIVILIAN]);
 
-    results[item.value]++;
-  });
+//   y += counts[CIVILIAN];
 
-  return results;
-}
+//   ctx.fillStyle = colors[MEDIC];
+//   ctx.fillRect(graphTickCount, y, 1, counts[MEDIC]);
 
-function totalEntities() {
-  return numCivilians + numCorpses + numMedics + numZombies;
-}
+//   y += counts[MEDIC];
 
-function loop() {
-  board.forEach((item) => {
-    let xDelta;
-    let yDelta;
+//   ctx.fillStyle = colors[CORPSE];
+//   ctx.fillRect(graphTickCount, y, 1, counts[CORPSE]);
 
-    if (wobble) {
-      xDelta = Math.random() * 2 - 1;
-      yDelta = Math.random() * 2 - 1;
-    } else {
-      xDelta = 0;
-      yDelta = 0;
-    }
+//   y += counts[CORPSE];
 
-    xDelta += item.velX;
-    yDelta += item.velY;
+//   ctx.fillStyle = colors[ZOMBIE];
+//   ctx.fillRect(graphTickCount, y, 1, counts[ZOMBIE]);
+// }, 200);
 
-    let newX = limitX(item.x + xDelta);
-    let newY = limitY(item.y + yDelta);
+// loop();
 
-    if (item.cooldown === 0) {
-      // Move entity to new position
-      item.x = newX;
-      item.y = newY;
-    } else {
-      item.cooldown--;
-    }
+// function limitX(x) {
+//   return Math.max(Math.min(x, boardWidth - 1), 0);
+// }
 
-    // Bounce off walls
-    if (item.x === 0) item.velX = 1;
-    if (item.x === boardWidth - 1) item.velX = -1;
-    if (item.y === 0) item.velY = 1;
-    // if (item.y === boardHeight - 1) item.velY = -1;
-    if (item.y > boardHeight - totalEntities() - bodyScale * 2) item.velY = -1;
+// function limitY(x) {
+//   return Math.max(Math.min(x, boardHeight - 1), 0);
+// }
 
-    const nearbys = countNearby(item.x, item.y);
+// function countNearby(x, y) {
+//   const results = {
+//     [CIVILIAN]: 0,
+//     [ZOMBIE]: 0,
+//     [CORPSE]: 0,
+//     [MEDIC]: 0,
+//     null: 0,
+//   };
 
-    switch (item.value) {
-      case CORPSE:
-        updateCorpse(item, nearbys);
-        break;
-      case CIVILIAN:
-        updateCivilian(item, nearbys);
-        break;
-      case MEDIC:
-        updateMedic(item, nearbys);
-        break;
-      case ZOMBIE:
-        updateZombie(item, nearbys);
-        break;
-    }
-  });
+//   board.forEach((item) => {
+//     if (item.cooldown > 0) return;
+//     if (item.x < x - nearbyRange) return;
+//     if (item.x > x + nearbyRange) return;
+//     if (item.y < y - nearbyRange) return;
+//     if (item.y > y + nearbyRange) return;
 
-  if (play === true) {
-    window.setTimeout(loop, gameTickRateMS);
-  }
-}
+//     results[item.value]++;
+//   });
 
-function updateCorpse(item, nearbys) {
-  if (item.cooldown === 0) {
-    item.value = ZOMBIE;
-    item.velX = randomVel();
-    item.velY = randomVel();
-  }
+//   return results;
+// }
 
-  if (nearbys[MEDIC] > 0) {
-    item.value = CIVILIAN;
-    item.velX = randomVel();
-    item.velY = randomVel();
-  }
-}
+// function totalEntities() {
+//   return numCivilians + numCorpses + numMedics + numZombies;
+// }
 
-function updateCivilian(item, nearbys) {
-  // If there's a medic nearby, you learn
-  if (nearbys[MEDIC] > 0) {
-    item.training += nearbys[MEDIC];
-  }
+// function loop() {
+//   board.forEach((item) => {
+//     let xDelta;
+//     let yDelta;
 
-  if (item.training > 100) {
-    item.value = MEDIC;
-    item.velX = randomVel();
-    item.velY = randomVel();
-    return;
-  }
+//     if (wobble) {
+//       xDelta = Math.random() * 2 - 1;
+//       yDelta = Math.random() * 2 - 1;
+//     } else {
+//       xDelta = 0;
+//       yDelta = 0;
+//     }
 
-  // If there are zombies but not enough civilians, you got got
-  if (nearbys[ZOMBIE] > 0) {
-    item.value = CORPSE;
-    item.velX = randomVel();
-    item.velY = randomVel();
-    item.cooldown = 200;
-    return;
-  }
-}
+//     xDelta += item.velX;
+//     yDelta += item.velY;
 
-function updateMedic(item, nearbys) {
-  // If there are zombies nearby and not enough civilians, you get got
-  if (nearbys[ZOMBIE] > 1 && nearbys[CIVILIAN] < 1) {
-    item.value = ZOMBIE;
-    item.velX = randomVel();
-    item.velY = randomVel();
-    item.cooldown = 50;
-  }
-}
+//     let newX = limitX(item.x + xDelta);
+//     let newY = limitY(item.y + yDelta);
 
-function updateZombie(item, nearbys) {
-  if (nearbys[MEDIC] > 0) {
-    item.value = CIVILIAN;
-    item.velX = randomVel();
-    item.velY = randomVel();
-    item.cooldown = 50;
-  }
-}
+//     if (item.cooldown === 0) {
+//       // Move entity to new position
+//       item.x = newX;
+//       item.y = newY;
+//     } else {
+//       item.cooldown--;
+//     }
 
-function clearBoard(board) {
-  ctx.fillStyle = colors[BG];
-  ctx.fillRect(0, 0, boardWidth, boardHeight - totalEntities());
-}
+//     // Bounce off walls
+//     if (item.x === 0) item.velX = 1;
+//     if (item.x === boardWidth - 1) item.velX = -1;
+//     if (item.y === 0) item.velY = 1;
+//     // if (item.y === boardHeight - 1) item.velY = -1;
+//     if (item.y > boardHeight - totalEntities() - bodyScale * 2) item.velY = -1;
 
-function drawBoard(board) {
-  clearBoard();
-  board.forEach(drawItem);
-}
+//     const nearbys = countNearby(item.x, item.y);
 
-function randomVel() {
-  return Math.floor(Math.random() * 3) - 1;
-}
+//     switch (item.value) {
+//       case CORPSE:
+//         updateCorpse(item, nearbys);
+//         break;
+//       case CIVILIAN:
+//         updateCivilian(item, nearbys);
+//         break;
+//       case MEDIC:
+//         updateMedic(item, nearbys);
+//         break;
+//       case ZOMBIE:
+//         updateZombie(item, nearbys);
+//         break;
+//     }
+//   });
 
-function fillBoardRandomly(board) {
-  for (let i = 0; i < numCivilians; i++) {
-    board.push({
-      x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight - totalEntities()),
-      velX: randomVel(),
-      velY: randomVel(),
-      value: CIVILIAN,
-      cooldown: 0,
-      training: 0,
-    });
-  }
+//   if (play === true) {
+//     window.setTimeout(loop, gameTickRateMS);
+//   }
+// }
 
-  for (let i = 0; i < numZombies; i++) {
-    board.push({
-      x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight - totalEntities()),
-      velX: randomVel(),
-      velY: randomVel(),
-      value: ZOMBIE,
-      cooldown: 0,
-      training: 0,
-    });
-  }
+// function updateCorpse(item, nearbys) {
+//   if (item.cooldown === 0) {
+//     item.value = ZOMBIE;
+//     item.velX = randomVel();
+//     item.velY = randomVel();
+//   }
 
-  for (let i = 0; i < numMedics; i++) {
-    board.push({
-      x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight - totalEntities()),
-      velX: randomVel(),
-      velY: randomVel(),
-      value: MEDIC,
-      cooldown: 0,
-      training: 100,
-    });
-  }
+//   if (nearbys[MEDIC] > 0) {
+//     item.value = CIVILIAN;
+//     item.velX = randomVel();
+//     item.velY = randomVel();
+//   }
+// }
 
-  for (let i = 0; i < numCorpses; i++) {
-    board.push({
-      x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight - totalEntities()),
-      velX: randomVel(),
-      velY: randomVel(),
-      value: CORPSE,
-      cooldown: 2000,
-      training: 0,
-    });
-  }
+// function updateCivilian(item, nearbys) {
+//   // If there's a medic nearby, you learn
+//   if (nearbys[MEDIC] > 0) {
+//     item.training += nearbys[MEDIC];
+//   }
 
-  return board;
-}
+//   if (item.training > 100) {
+//     item.value = MEDIC;
+//     item.velX = randomVel();
+//     item.velY = randomVel();
+//     return;
+//   }
 
-function drawItem(item) {
-  if (bodyShape === "rect") {
-    ctx.fillStyle = colors[item.value];
-    ctx.fillRect(item.x, item.y, bodyScale, bodyScale);
-  } else {
-    ctx.beginPath();
-    ctx.arc(item.x, item.y, bodyScale, 0, 2 * Math.PI);
-    ctx.fill();
-  }
-}
+//   // If there are zombies but not enough civilians, you got got
+//   if (nearbys[ZOMBIE] > 0) {
+//     item.value = CORPSE;
+//     item.velX = randomVel();
+//     item.velY = randomVel();
+//     item.cooldown = 200;
+//     return;
+//   }
+// }
 
-function countItems() {
-  const counts = {
-    [CIVILIAN]: 0,
-    [MEDIC]: 0,
-    [ZOMBIE]: 0,
-    [CORPSE]: 0,
-  };
+// function updateMedic(item, nearbys) {
+//   // If there are zombies nearby and not enough civilians, you get got
+//   if (nearbys[ZOMBIE] > 1 && nearbys[CIVILIAN] < 1) {
+//     item.value = ZOMBIE;
+//     item.velX = randomVel();
+//     item.velY = randomVel();
+//     item.cooldown = 50;
+//   }
+// }
 
-  board.forEach((item) => {
-    counts[item.value]++;
-  });
+// function updateZombie(item, nearbys) {
+//   if (nearbys[MEDIC] > 0) {
+//     item.value = CIVILIAN;
+//     item.velX = randomVel();
+//     item.velY = randomVel();
+//     item.cooldown = 50;
+//   }
+// }
 
-  return counts;
-}
+// function clearBoard(board) {
+//   ctx.fillStyle = colors[BG];
+//   ctx.fillRect(0, 0, boardWidth, boardHeight - totalEntities());
+// }
 
-function updateCounts() {
-  let scaleFactor = board.length / 250;
+// function drawBoard(board) {
+//   clearBoard();
+//   board.forEach(drawItem);
+// }
 
-  counts = countItems();
+// function randomVel() {
+//   return Math.floor(Math.random() * 3) - 1;
+// }
 
-  corpseCountOutput.innerHTML = counts[CORPSE];
-  corpseCountOutput.style.fontSize = `${20 + counts[CORPSE] / scaleFactor}px`;
+// function fillBoardRandomly(board) {
+//   for (let i = 0; i < numCivilians; i++) {
+//     board.push({
+//       x: Math.floor(Math.random() * boardWidth),
+//       y: Math.floor(Math.random() * boardHeight - totalEntities()),
+//       velX: randomVel(),
+//       velY: randomVel(),
+//       value: CIVILIAN,
+//       cooldown: 0,
+//       training: 0,
+//     });
+//   }
 
-  civilianCountOutput.innerHTML = counts[CIVILIAN];
-  civilianCountOutput.style.fontSize = `${
-    20 + counts[CIVILIAN] / scaleFactor
-  }px`;
+//   for (let i = 0; i < numZombies; i++) {
+//     board.push({
+//       x: Math.floor(Math.random() * boardWidth),
+//       y: Math.floor(Math.random() * boardHeight - totalEntities()),
+//       velX: randomVel(),
+//       velY: randomVel(),
+//       value: ZOMBIE,
+//       cooldown: 0,
+//       training: 0,
+//     });
+//   }
 
-  zombieCountOutput.innerHTML = counts[ZOMBIE];
-  zombieCountOutput.style.fontSize = `${20 + counts[ZOMBIE] / scaleFactor}px`;
+//   for (let i = 0; i < numMedics; i++) {
+//     board.push({
+//       x: Math.floor(Math.random() * boardWidth),
+//       y: Math.floor(Math.random() * boardHeight - totalEntities()),
+//       velX: randomVel(),
+//       velY: randomVel(),
+//       value: MEDIC,
+//       cooldown: 0,
+//       training: 100,
+//     });
+//   }
 
-  medicCountOutput.innerHTML = counts[MEDIC];
-  medicCountOutput.style.fontSize = `${20 + counts[MEDIC] / scaleFactor}px`;
-}
+//   for (let i = 0; i < numCorpses; i++) {
+//     board.push({
+//       x: Math.floor(Math.random() * boardWidth),
+//       y: Math.floor(Math.random() * boardHeight - totalEntities()),
+//       velX: randomVel(),
+//       velY: randomVel(),
+//       value: CORPSE,
+//       cooldown: 2000,
+//       training: 0,
+//     });
+//   }
+
+//   return board;
+// }
+
+// function drawItem(item) {
+//   if (bodyShape === "rect") {
+//     ctx.fillStyle = colors[item.value];
+//     ctx.fillRect(item.x, item.y, bodyScale, bodyScale);
+//   } else {
+//     ctx.beginPath();
+//     ctx.arc(item.x, item.y, bodyScale, 0, 2 * Math.PI);
+//     ctx.fill();
+//   }
+// }
+
+// function countItems() {
+//   const counts = {
+//     [CIVILIAN]: 0,
+//     [MEDIC]: 0,
+//     [ZOMBIE]: 0,
+//     [CORPSE]: 0,
+//   };
+
+//   board.forEach((item) => {
+//     counts[item.value]++;
+//   });
+
+//   return counts;
+// }
+
+// function updateCounts() {
+//   let scaleFactor = board.length / 250;
+
+//   counts = countItems();
+
+//   corpseCountOutput.innerHTML = counts[CORPSE];
+//   corpseCountOutput.style.fontSize = `${20 + counts[CORPSE] / scaleFactor}px`;
+
+//   civilianCountOutput.innerHTML = counts[CIVILIAN];
+//   civilianCountOutput.style.fontSize = `${
+//     20 + counts[CIVILIAN] / scaleFactor
+//   }px`;
+
+//   zombieCountOutput.innerHTML = counts[ZOMBIE];
+//   zombieCountOutput.style.fontSize = `${20 + counts[ZOMBIE] / scaleFactor}px`;
+
+//   medicCountOutput.innerHTML = counts[MEDIC];
+//   medicCountOutput.style.fontSize = `${20 + counts[MEDIC] / scaleFactor}px`;
+// }
