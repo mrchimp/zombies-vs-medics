@@ -68,10 +68,13 @@ document.getElementById("resetButton").addEventListener("click", (e) => {
 });
 
 function reset() {
-  numCivilians = document.getElementById("civilianCount").value;
-  numZombies = document.getElementById("zombieCount").value;
-  numMedics = document.getElementById("medicCount").value;
-  resolutionScale = document.getElementById("resolutionScale").value;
+  numCivilians = parseInt(document.getElementById("civilianCount").value, 10);
+  numZombies = parseInt(document.getElementById("zombieCount").value, 10);
+  numMedics = parseInt(document.getElementById("medicCount").value, 10);
+  resolutionScale = parseInt(
+    document.getElementById("resolutionScale").value,
+    10
+  );
 
   updateScale();
   board = [];
