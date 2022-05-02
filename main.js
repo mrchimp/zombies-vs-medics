@@ -165,7 +165,11 @@ function countNearby(item) {
   };
 
   board.forEach((item2) => {
+    // Exclude self
+    if (item === item2) return;
+    // Exclude items on countdown
     if (item2.cooldown > 0) return;
+
     if (distance(item, item2) < nearbyRange) return;
 
     results[item.value]++;
