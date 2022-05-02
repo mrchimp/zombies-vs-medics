@@ -133,7 +133,14 @@ function limitY(x) {
   return Math.max(Math.min(x, boardHeight - 1), 0);
 }
 
-function countNearby(x, y) {
+function distance(item1, item2) {
+  return Math.sqrt(
+    (item1.x - item2.x) * (item1.x - item2.x) +
+      (item1.y - item2.y) * (item1.y - item2.y)
+  );
+}
+
+function countNearby(item) {
   const results = {
     [CIVILIAN]: 0,
     [ZOMBIE]: 0,
@@ -142,12 +149,9 @@ function countNearby(x, y) {
     null: 0,
   };
 
-  board.forEach((item) => {
-    if (item.cooldown > 0) return;
-    if (item.x < x - nearbyRange) return;
-    if (item.x > x + nearbyRange) return;
-    if (item.y < y - nearbyRange) return;
-    if (item.y > y + nearbyRange) return;
+  board.forEach((item2) => {
+    if (item2.cooldown > 0) return;
+    if (distance(item, item2) < nearbyRange) return;
 
     results[item.value]++;
   });
@@ -193,7 +197,7 @@ function loop() {
     // if (item.y === boardHeight - 1) item.velY = -1;
     if (item.y > boardHeight - totalEntities() - bodyScale * 2) item.velY = -1;
 
-    const nearbys = countNearby(item.x, item.y);
+    const nearbys = countNearby(item);
 
     switch (item.value) {
       case CORPSE:
