@@ -67,6 +67,10 @@ document.getElementById("resetButton").addEventListener("click", (e) => {
   reset();
 });
 
+function graphHeight() {
+  return 100;
+}
+
 function reset() {
   numCivilians = parseInt(document.getElementById("civilianCount").value, 10);
   numZombies = parseInt(document.getElementById("zombieCount").value, 10);
@@ -75,6 +79,7 @@ function reset() {
     document.getElementById("resolutionScale").value,
     10
   );
+  graphTickCount = 0;
 
   updateScale();
   board = [];
@@ -97,34 +102,41 @@ window.setInterval(() => {
 
 window.setInterval(updateCounts, 128);
 
-window.setInterval(() => {
+window.setInterval(drawGraph, 200);
+
+function drawGraph() {
   if (!play) {
     return;
   }
 
   graphTickCount = (graphTickCount + 1) % boardWidth;
 
-  let y = boardHeight - totalEntities();
+  let total = totalEntities();
+  let y = boardHeight - graphHeight();
   const counts = countItems();
+  let civilianHeight = (counts[CIVILIAN] / total) * 100;
+  let medicHeight = (counts[MEDIC] / total) * 100;
+  let corpseHeight = (counts[CORPSE] / total) * 100;
+  let zombieHeight = (counts[ZOMBIE] / total) * 100;
 
   ctx.fillStyle = colors[CIVILIAN];
-  ctx.fillRect(graphTickCount, y, 1, counts[CIVILIAN]);
+  ctx.fillRect(graphTickCount, y, 1, civilianHeight);
 
-  y += counts[CIVILIAN];
+  y += civilianHeight;
 
   ctx.fillStyle = colors[MEDIC];
-  ctx.fillRect(graphTickCount, y, 1, counts[MEDIC]);
+  ctx.fillRect(graphTickCount, y, 1, medicHeight);
 
-  y += counts[MEDIC];
+  y += medicHeight;
 
   ctx.fillStyle = colors[CORPSE];
-  ctx.fillRect(graphTickCount, y, 1, counts[CORPSE]);
+  ctx.fillRect(graphTickCount, y, 1, corpseHeight);
 
-  y += counts[CORPSE];
+  y += corpseHeight;
 
   ctx.fillStyle = colors[ZOMBIE];
-  ctx.fillRect(graphTickCount, y, 1, counts[ZOMBIE]);
-}, 200);
+  ctx.fillRect(graphTickCount, y, 1, zombieHeight);
+}
 
 loop();
 
@@ -198,7 +210,7 @@ function loop() {
     if (item.x === boardWidth - 1) item.velX = -1;
     if (item.y === 0) item.velY = 1;
     // if (item.y === boardHeight - 1) item.velY = -1;
-    if (item.y > boardHeight - totalEntities() - bodyScale * 2) item.velY = -1;
+    if (item.y > boardHeight - graphHeight() - bodyScale * 2) item.velY = -1;
 
     const nearbys = countNearby(item);
 
@@ -279,9 +291,9 @@ function updateZombie(item, nearbys) {
   }
 }
 
-function clearBoard(board) {
+function clearBoard() {
   ctx.fillStyle = colors[BG];
-  ctx.fillRect(0, 0, boardWidth, boardHeight - totalEntities());
+  ctx.fillRect(0, 0, boardWidth, boardHeight - graphHeight());
 }
 
 function drawBoard(board) {
@@ -297,7 +309,7 @@ function fillBoardRandomly(board) {
   for (let i = 0; i < numCivilians; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * (boardHeight - totalEntities())),
+      y: Math.floor(Math.random() * (boardHeight - graphHeight())),
       velX: randomVel(),
       velY: randomVel(),
       value: CIVILIAN,
@@ -309,7 +321,7 @@ function fillBoardRandomly(board) {
   for (let i = 0; i < numZombies; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * (boardHeight - totalEntities())),
+      y: Math.floor(Math.random() * (boardHeight - graphHeight())),
       velX: randomVel(),
       velY: randomVel(),
       value: ZOMBIE,
@@ -321,7 +333,7 @@ function fillBoardRandomly(board) {
   for (let i = 0; i < numMedics; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * (boardHeight - totalEntities())),
+      y: Math.floor(Math.random() * (boardHeight - graphHeight())),
       velX: randomVel(),
       velY: randomVel(),
       value: MEDIC,
@@ -333,7 +345,7 @@ function fillBoardRandomly(board) {
   for (let i = 0; i < numCorpses; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * (boardHeight - totalEntities())),
+      y: Math.floor(Math.random() * (boardHeight - graphHeight())),
       velX: randomVel(),
       velY: randomVel(),
       value: CORPSE,
