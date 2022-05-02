@@ -1,8 +1,12 @@
+/**
+ * Made with some help from Ben Eater https://github.com/beneater/boids/
+ */
+
 let resolutionScale = 3;
 let boardWidth;
 let boardHeight;
-const gameTickRateMS = 32;
-const renderTickRateMS = 32;
+const gameTickRateMS = 16;
+const renderTickRateMS = 16;
 let numCivilians = 100;
 let numZombies = 50;
 let numMedics = 5;
@@ -17,6 +21,9 @@ const CIVILIAN = 1;
 const ZOMBIE = 2;
 const MEDIC = 3;
 const wobble = true;
+
+const visualRange = 25;
+
 let play = true;
 const colors = {
   [CORPSE]: "#632",
@@ -87,6 +94,7 @@ function reset() {
   ctx.fillStyle = "#111";
   ctx.fillRect(0, 0, boardWidth, boardHeight);
   drawBoard(board, ctx);
+  console.clear();
 }
 
 function updateScale(e) {
@@ -96,9 +104,7 @@ function updateScale(e) {
   ctx.canvas.height = boardHeight;
 }
 
-window.setInterval(() => {
-  drawBoard(board);
-}, renderTickRateMS);
+drawBoard(board);
 
 window.setInterval(updateCounts, 128);
 
@@ -155,6 +161,126 @@ function distance(item1, item2) {
   );
 }
 
+// Constrain a boid to within the window. If it gets too close to an edge,
+// nudge it back in and reverse its direction.
+function keepWithinBounds(boid) {
+  const margin = 10;
+  const turnFactor = 0.5;
+
+  if (boid.x < margin) {
+    boid.velX += turnFactor;
+  }
+  if (boid.x > boardWidth - margin) {
+    boid.velX -= turnFactor;
+  }
+  if (boid.y < margin) {
+    boid.velY += turnFactor;
+  }
+  if (boid.y > boardHeight - graphHeight() - margin) {
+    boid.velY -= turnFactor;
+  }
+}
+
+// Find the center of mass of the other boids and adjust velocity slightly to
+// point towards the center of mass.
+function flyTowardsCenter(boid) {
+  let centeringFactor = 0.001; // adjust velocity by this %
+  let centerX = 0;
+  let centerY = 0;
+  let numNeighbors = 0;
+
+  if (boid.value === ZOMBIE) {
+    centeringFactor = 0.0005;
+  }
+
+  for (let otherBoid of board) {
+    if (distance(boid, otherBoid) < visualRange) {
+      centerX += otherBoid.x;
+      centerY += otherBoid.y;
+      numNeighbors += 1;
+    }
+  }
+
+  if (numNeighbors) {
+    centerX = centerX / numNeighbors;
+    centerY = centerY / numNeighbors;
+
+    boid.velX += (centerX - boid.x) * centeringFactor;
+    boid.velY += (centerY - boid.y) * centeringFactor;
+  }
+}
+
+// Move away from other boids that are too close to avoid colliding
+function avoidOthers(boid) {
+  let minDistance = 4; // The distance to stay away from other boids
+  let avoidFactor = 0.03; // Adjust velocity by this %
+
+  if (boid.value === ZOMBIE) {
+    minDistance = 4;
+    avoidFactor = 0.03;
+  }
+
+  let moveX = 0;
+  let moveY = 0;
+  for (let otherBoid of board) {
+    if (otherBoid !== boid) {
+      if (distance(boid, otherBoid) < minDistance) {
+        moveX += boid.x - otherBoid.x;
+        moveY += boid.y - otherBoid.y;
+      }
+    }
+  }
+
+  boid.velX += moveX * avoidFactor;
+  boid.velY += moveY * avoidFactor;
+}
+
+// Find the average velocity (speed and direction) of the other boids and
+// adjust velocity slightly to match.
+function matchVelocity(boid) {
+  let matchingFactor = 0.05; // Adjust by this % of average velocity
+  let avgDX = 0;
+  let avgDY = 0;
+  let numNeighbors = 0;
+
+  if (boid.value === ZOMBIE) {
+    matchingFactor = 0.01;
+  }
+
+  for (let otherBoid of board) {
+    if (distance(boid, otherBoid) < visualRange) {
+      avgDX += otherBoid.velX;
+      avgDY += otherBoid.velY;
+      numNeighbors += 1;
+    }
+  }
+
+  if (numNeighbors) {
+    avgDX = avgDX / numNeighbors;
+    avgDY = avgDY / numNeighbors;
+
+    boid.velX += (avgDX - boid.velX) * matchingFactor;
+    boid.velY += (avgDY - boid.velY) * matchingFactor;
+  }
+}
+
+// Speed will naturally vary in flocking behavior, but real animals can't go
+// arbitrarily fast.
+function limitSpeed(boid) {
+  let speedLimit = 1;
+
+  if (boid.value === ZOMBIE) {
+    speedLimit = 0.3;
+  }
+
+  const speed = Math.sqrt(boid.velX * boid.velX + boid.velY * boid.velY);
+
+  if (speed > speedLimit) {
+    boid.velX = (boid.velX / speed) * speedLimit;
+    boid.velY = (boid.velY / speed) * speedLimit;
+  }
+}
+
 function countNearby(item) {
   const results = {
     [CIVILIAN]: 0,
@@ -167,12 +293,14 @@ function countNearby(item) {
   board.forEach((item2) => {
     // Exclude self
     if (item === item2) return;
+
     // Exclude items on countdown
     if (item2.cooldown > 0) return;
 
-    if (distance(item, item2) < nearbyRange) return;
+    // Item out of range
+    if (distance(item, item2) > nearbyRange) return;
 
-    results[item.value]++;
+    results[item2.value]++;
   });
 
   return results;
@@ -184,36 +312,18 @@ function totalEntities() {
 
 function loop() {
   board.forEach((item) => {
-    let xDelta;
-    let yDelta;
-
-    if (wobble) {
-      xDelta = Math.random() * 2 - 1;
-      yDelta = Math.random() * 2 - 1;
-    } else {
-      xDelta = 0;
-      yDelta = 0;
-    }
-
-    xDelta += item.velX;
-    yDelta += item.velY;
-
-    let newX = limitX(item.x + xDelta);
-    let newY = limitY(item.y + yDelta);
-
     if (item.cooldown === 0) {
-      // Move entity to new position
-      item.x = newX;
-      item.y = newY;
+      flyTowardsCenter(item);
+      avoidOthers(item);
+      matchVelocity(item);
+      limitSpeed(item);
+      keepWithinBounds(item);
+
+      item.x += item.velX;
+      item.y += item.velY;
     } else {
       item.cooldown--;
     }
-
-    // Bounce off walls
-    if (item.x === 0) item.velX = 1;
-    if (item.x === boardWidth - 1) item.velX = -1;
-    if (item.y === 0) item.velY = 1;
-    if (item.y > boardHeight - graphHeight() - bodyScale * 2) item.velY = -1;
 
     const nearbys = countNearby(item);
 
@@ -245,7 +355,7 @@ function updateCorpse(item, nearbys) {
     item.velY = randomVel();
   }
 
-  if (nearbys[MEDIC] > 0) {
+  if (nearbys[MEDIC] > 0 && item.cooldown < 100) {
     item.value = CIVILIAN;
     item.velX = randomVel();
     item.velY = randomVel();
@@ -255,7 +365,7 @@ function updateCorpse(item, nearbys) {
 function updateCivilian(item, nearbys) {
   // If there's a medic nearby, you learn
   if (nearbys[MEDIC] > 0) {
-    item.training += nearbys[MEDIC];
+    item.training += 1;
   }
 
   if (item.training > 100) {
@@ -299,9 +409,13 @@ function clearBoard() {
   ctx.fillRect(0, 0, boardWidth, boardHeight - graphHeight());
 }
 
-function drawBoard(board) {
+function drawBoard() {
   clearBoard();
   board.forEach(drawItem);
+
+  if (play) {
+    window.requestAnimationFrame(drawBoard);
+  }
 }
 
 function randomVel() {
