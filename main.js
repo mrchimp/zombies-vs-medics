@@ -102,7 +102,7 @@ window.setInterval(() => {
 
 window.setInterval(updateCounts, 128);
 
-window.setInterval(drawGraph, 200);
+window.setInterval(drawGraph, 300);
 
 function drawGraph() {
   if (!play) {
