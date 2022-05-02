@@ -287,7 +287,7 @@ function drawBoard(board) {
 }
 
 function randomVel() {
-  return Math.floor(Math.random() * 3) - 1;
+  return Math.random() * 2 - 1;
 }
 
 function fillBoardRandomly(board) {
