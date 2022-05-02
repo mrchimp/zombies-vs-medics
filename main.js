@@ -213,7 +213,6 @@ function loop() {
     if (item.x === 0) item.velX = 1;
     if (item.x === boardWidth - 1) item.velX = -1;
     if (item.y === 0) item.velY = 1;
-    // if (item.y === boardHeight - 1) item.velY = -1;
     if (item.y > boardHeight - graphHeight() - bodyScale * 2) item.velY = -1;
 
     const nearbys = countNearby(item);
