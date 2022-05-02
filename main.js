@@ -294,7 +294,7 @@ function fillBoardRandomly(board) {
   for (let i = 0; i < numCivilians; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight - totalEntities()),
+      y: Math.floor(Math.random() * (boardHeight - totalEntities())),
       velX: randomVel(),
       velY: randomVel(),
       value: CIVILIAN,
@@ -306,7 +306,7 @@ function fillBoardRandomly(board) {
   for (let i = 0; i < numZombies; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight - totalEntities()),
+      y: Math.floor(Math.random() * (boardHeight - totalEntities())),
       velX: randomVel(),
       velY: randomVel(),
       value: ZOMBIE,
@@ -318,7 +318,7 @@ function fillBoardRandomly(board) {
   for (let i = 0; i < numMedics; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight - totalEntities()),
+      y: Math.floor(Math.random() * (boardHeight - totalEntities())),
       velX: randomVel(),
       velY: randomVel(),
       value: MEDIC,
@@ -330,7 +330,7 @@ function fillBoardRandomly(board) {
   for (let i = 0; i < numCorpses; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * boardHeight - totalEntities()),
+      y: Math.floor(Math.random() * (boardHeight - totalEntities())),
       velX: randomVel(),
       velY: randomVel(),
       value: CORPSE,
