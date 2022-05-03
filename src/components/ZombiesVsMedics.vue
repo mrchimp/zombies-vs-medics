@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 
+const showControls = ref(false);
+
 const numCivilians = ref(100);
 const numZombies = ref(50);
 const numMedics = ref(5);
@@ -18,7 +20,6 @@ const civilianCount = ref(0);
 const civilianFontSize = ref("");
 
 const gameTickRateMS = 16;
-const renderTickRateMS = 16;
 
 const bodyScale = 3;
 const nearbyRange = bodyScale * 2;
@@ -499,16 +500,17 @@ function updateCounts() {
   <div>
     <canvas ref="canvas"></canvas>
 
-    <div id="controls">
-      <!-- <button id="toggleControlsBtn" type="button">HIDE</button> -->
-      <div>
+    <div class="controls">
+      <button type="button" @click.prevent="showControls = !showControls">
+        {{ showControls ? "HIDE" : "Show controls" }}
+      </button>
+      <div v-if="showControls">
         <div>
           <label for="civilianCount"
             >Civilians [<span v-text="civilianCount"></span>]</label
           >
           <input
             type="range"
-            id="civilianCount"
             min="0"
             max="500"
             v-model="numCivilians"
@@ -521,7 +523,6 @@ function updateCounts() {
           >
           <input
             type="range"
-            id="medicCount"
             min="0"
             max="500"
             v-model="numMedics"
@@ -534,7 +535,6 @@ function updateCounts() {
           >
           <input
             type="range"
-            id="zombieCount"
             min="0"
             max="500"
             v-model="numZombies"
@@ -547,7 +547,6 @@ function updateCounts() {
           >
           <input
             type="range"
-            id="resolutionScale"
             min="1"
             max="10"
             v-model="resolutionScale"
@@ -577,7 +576,7 @@ canvas {
   image-rendering: pixelated;
   z-index: 1;
 }
-#controls {
+.controls {
   background: white;
   display: flex;
   flex-direction: column;
@@ -589,7 +588,7 @@ canvas {
   width: 10rem;
   z-index: 3;
 }
-#controls input {
+.controls input {
   width: 100%;
 }
 .counts {
