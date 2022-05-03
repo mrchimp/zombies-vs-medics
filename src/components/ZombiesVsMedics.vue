@@ -7,7 +7,7 @@ const numCivilians = ref(100);
 const numZombies = ref(50);
 const numMedics = ref(5);
 const numCorpses = ref(0);
-const resolutionScale = ref(1);
+const resolutionScale = ref(2);
 let graphTickCount = 0;
 
 const corpseCount = ref(0);
@@ -507,7 +507,7 @@ function updateCounts() {
       <div v-if="showControls">
         <div>
           <label for="civilianCount"
-            >Civilians [<span v-text="civilianCount"></span>]</label
+            >Civilians [<span v-text="numCivilians"></span>]</label
           >
           <input
             type="range"
@@ -519,7 +519,7 @@ function updateCounts() {
         </div>
         <div>
           <label for="medicCount"
-            >Medics [<span v-text="medicCount"></span>]</label
+            >Medics [<span v-text="numMedics"></span>]</label
           >
           <input
             type="range"
@@ -531,7 +531,7 @@ function updateCounts() {
         </div>
         <div>
           <label for="zombieCount"
-            >Zombies [<span v-text="zombieCount"></span>]</label
+            >Zombies [<span v-text="numZombies"></span>]</label
           >
           <input
             type="range"
