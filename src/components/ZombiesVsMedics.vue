@@ -542,9 +542,9 @@ function updateCounts() {
           />
         </div>
         <div>
-          <label for="resolutionScale"
-            >Resolution Scale [<span v-text="resolutionScale"></span>]</label
-          >
+          <label for="resolutionScale">
+            Resolution Scale [<span v-text="resolutionScale"></span>]
+          </label>
           <input
             type="range"
             min="1"
@@ -552,6 +552,12 @@ function updateCounts() {
             v-model="resolutionScale"
             @input="reset"
           />
+        </div>
+        <div>
+          <label for="visualRange">
+            Visual Range [<span v-text="visualRange"></span>]
+          </label>
+          <input type="range" min="1" max="200" v-model="visualRange" />
         </div>
 
         <button @click.prevent="onPause">Pause/Play</button>
