@@ -53,6 +53,10 @@ const medicFontSize = ref("");
 const civilianCount = ref(0);
 const civilianFontSize = ref("");
 
+const civilianCenteringFactor = ref(0.001);
+const zombieCenteringFactor = ref(0.0005);
+const medicCenteringFactor = ref(0.001);
+
 const gameTickRateMS = 16;
 
 const bodyScale = 3;
@@ -266,13 +270,22 @@ function keepWithinBounds(item: Item) {
 // Find the center of mass of the other boids and adjust velocity slightly to
 // point towards the center of mass.
 function flyTowardsCenter(item: Item) {
-  let centeringFactor = 0.001; // adjust velocity by this %
+  let centeringFactor; // adjust velocity by this %
   let centerX = 0;
   let centerY = 0;
   let numNeighbors = 0;
 
-  if (item.value === ItemType.Zombie) {
-    centeringFactor = 0.0005;
+  switch (item.value) {
+    case ItemType.Zombie:
+      centeringFactor = zombieCenteringFactor.value;
+      break;
+    case ItemType.Medic:
+      centeringFactor = medicCenteringFactor.value;
+      break;
+    case ItemType.Civilian:
+    default:
+      centeringFactor = civilianCenteringFactor.value;
+      break;
   }
 
   for (let otherItem of board) {
@@ -557,6 +570,29 @@ function updateCounts() {
           v-model="visualRange"
           :min="1"
           :max="200"
+        ></ControlInput>
+
+        <!-- Centering Factors -->
+        <ControlInput
+          label="Civilian Centering Factor"
+          v-model="civilianCenteringFactor"
+          :min="0"
+          :max="0.1"
+          :step="0.001"
+        ></ControlInput>
+        <ControlInput
+          label="Medic Centering Factor"
+          v-model="medicCenteringFactor"
+          :min="0"
+          :max="0.1"
+          :step="0.001"
+        ></ControlInput>
+        <ControlInput
+          label="Zombie Centering Factor"
+          v-model="zombieCenteringFactor"
+          :min="0"
+          :max="0.1"
+          :step="0.001"
         ></ControlInput>
 
         <button @click.prevent="onPause">Pause/Play</button>

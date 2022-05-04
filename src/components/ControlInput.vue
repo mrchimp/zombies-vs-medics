@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-const props = defineProps(["label", "modelValue", "min", "max"]);
+const props = defineProps(["label", "modelValue", "min", "max", "step"]);
 const emit = defineEmits(["update:modelValue"]);
 
 function onInput(e: InputEvent) {
@@ -20,6 +20,7 @@ function onInput(e: InputEvent) {
       type="range"
       :min="props.min"
       :max="props.max"
+      :step="props.step"
       :value="props.modelValue"
       @input="onInput"
     />
