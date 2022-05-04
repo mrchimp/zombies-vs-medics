@@ -1,6 +1,39 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 
+enum ItemType {
+  Corpse = 0,
+  Civilian = 1,
+  Zombie = 2,
+  Medic = 3,
+}
+
+const Colors = {
+  [ItemType.Corpse]: "#632",
+  [ItemType.Civilian]: "#999",
+  [ItemType.Zombie]: "#f00",
+  [ItemType.Medic]: "#0f0",
+};
+
+const bgColor = "#000";
+
+interface Item {
+  x: number;
+  y: number;
+  velX: number;
+  velY: number;
+  value: ItemType;
+  cooldown: number;
+  training: number;
+}
+
+interface Nearbys {
+  [ItemType.Corpse]: number;
+  [ItemType.Civilian]: number;
+  [ItemType.Zombie]: number;
+  [ItemType.Medic]: number;
+}
+
 const showControls = ref(false);
 
 const numCivilians = ref(100);
@@ -10,8 +43,8 @@ const numCorpses = ref(0);
 const resolutionScale = ref(2);
 let graphTickCount = 0;
 
-const corpseCount = ref(0);
-const corpseFontSize = ref("");
+const CorpseCount = ref(0);
+const CorpseFontSize = ref("");
 const zombieCount = ref(0);
 const zombieFontSize = ref("");
 const medicCount = ref(0);
@@ -31,25 +64,18 @@ let play = true;
 
 const visualRange = ref(25);
 
-const BG = -1;
-const CORPSE = 0;
-const CIVILIAN = 1;
-const ZOMBIE = 2;
-const MEDIC = 3;
+const board: Item[] = [];
 
-const board = [];
-
-const canvas = ref(null);
-let ctx;
+const canvas = ref<HTMLCanvasElement | null>(null);
+let ctx: CanvasRenderingContext2D;
 
 onMounted(() => {
-  ctx = canvas.value.getContext("2d");
+  ctx = canvas.value?.getContext("2d")!;
 
   updateScale();
   ctx.canvas.width = boardWidth;
   ctx.canvas.height = boardHeight;
   ctx.imageSmoothingEnabled = false;
-  ctx.mozImageSmoothingEnabled = false;
   ctx.fillStyle = "#111";
   ctx.fillRect(0, 0, boardWidth, boardHeight);
 
@@ -63,14 +89,6 @@ onMounted(() => {
     loop();
   }
 });
-
-const colors = {
-  [CORPSE]: "#632",
-  [CIVILIAN]: "#999",
-  [ZOMBIE]: "#f00",
-  [MEDIC]: "#0f0",
-  [BG]: "#000",
-};
 
 function onPause() {
   if (play) {
@@ -115,7 +133,7 @@ function fillBoardRandomly() {
       y: Math.floor(Math.random() * (boardHeight - graphHeight())),
       velX: randomVel(),
       velY: randomVel(),
-      value: CIVILIAN,
+      value: ItemType.Civilian,
       cooldown: 0,
       training: 0,
     });
@@ -127,7 +145,7 @@ function fillBoardRandomly() {
       y: Math.floor(Math.random() * (boardHeight - graphHeight())),
       velX: randomVel(),
       velY: randomVel(),
-      value: ZOMBIE,
+      value: ItemType.Zombie,
       cooldown: 0,
       training: 0,
     });
@@ -139,7 +157,7 @@ function fillBoardRandomly() {
       y: Math.floor(Math.random() * (boardHeight - graphHeight())),
       velX: randomVel(),
       velY: randomVel(),
-      value: MEDIC,
+      value: ItemType.Medic,
       cooldown: 0,
       training: 100,
     });
@@ -151,7 +169,7 @@ function fillBoardRandomly() {
       y: Math.floor(Math.random() * (boardHeight - graphHeight())),
       velX: randomVel(),
       velY: randomVel(),
-      value: CORPSE,
+      value: ItemType.Corpse,
       cooldown: 2000,
       training: 0,
     });
@@ -159,7 +177,7 @@ function fillBoardRandomly() {
 }
 
 function clearBoard() {
-  ctx.fillStyle = colors[BG];
+  ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, boardWidth, boardHeight - graphHeight());
 }
 
@@ -172,8 +190,8 @@ function drawBoard() {
   }
 }
 
-function drawItem(item) {
-  ctx.fillStyle = colors[item.value];
+function drawItem(item: Item) {
+  ctx.fillStyle = Colors[item.value];
   ctx.fillRect(item.x, item.y, bodyScale, bodyScale);
 }
 
@@ -187,27 +205,27 @@ function drawGraph() {
   let total = totalEntities();
   let y = boardHeight - graphHeight();
   const counts = countItems();
-  let civilianHeight = (counts[CIVILIAN] / total) * 100;
-  let medicHeight = (counts[MEDIC] / total) * 100;
-  let corpseHeight = (counts[CORPSE] / total) * 100;
-  let zombieHeight = (counts[ZOMBIE] / total) * 100;
+  let civilianHeight = (counts[ItemType.Civilian] / total) * 100;
+  let medicHeight = (counts[ItemType.Medic] / total) * 100;
+  let CorpseHeight = (counts[ItemType.Corpse] / total) * 100;
+  let zombieHeight = (counts[ItemType.Zombie] / total) * 100;
 
-  ctx.fillStyle = colors[CIVILIAN];
+  ctx.fillStyle = Colors[ItemType.Civilian];
   ctx.fillRect(graphTickCount, y, 1, civilianHeight);
 
   y += civilianHeight;
 
-  ctx.fillStyle = colors[MEDIC];
+  ctx.fillStyle = Colors[ItemType.Medic];
   ctx.fillRect(graphTickCount, y, 1, medicHeight);
 
   y += medicHeight;
 
-  ctx.fillStyle = colors[CORPSE];
-  ctx.fillRect(graphTickCount, y, 1, corpseHeight);
+  ctx.fillStyle = Colors[ItemType.Corpse];
+  ctx.fillRect(graphTickCount, y, 1, CorpseHeight);
 
-  y += corpseHeight;
+  y += CorpseHeight;
 
-  ctx.fillStyle = colors[ZOMBIE];
+  ctx.fillStyle = Colors[ItemType.Zombie];
   ctx.fillRect(graphTickCount, y, 1, zombieHeight);
 }
 
@@ -217,7 +235,7 @@ function totalEntities() {
   );
 }
 
-function distance(item1, item2) {
+function distance(item1: Item, item2: Item) {
   return Math.sqrt(
     (item1.x - item2.x) * (item1.x - item2.x) +
       (item1.y - item2.y) * (item1.y - item2.y)
@@ -226,40 +244,40 @@ function distance(item1, item2) {
 
 // Constrain a boid to within the window. If it gets too close to an edge,
 // nudge it back in and reverse its direction.
-function keepWithinBounds(boid) {
+function keepWithinBounds(item: Item) {
   const margin = 10;
   const turnFactor = 0.5;
 
-  if (boid.x < margin) {
-    boid.velX += turnFactor;
+  if (item.x < margin) {
+    item.velX += turnFactor;
   }
-  if (boid.x > boardWidth - margin) {
-    boid.velX -= turnFactor;
+  if (item.x > boardWidth - margin) {
+    item.velX -= turnFactor;
   }
-  if (boid.y < margin) {
-    boid.velY += turnFactor;
+  if (item.y < margin) {
+    item.velY += turnFactor;
   }
-  if (boid.y > boardHeight - graphHeight() - margin) {
-    boid.velY -= turnFactor;
+  if (item.y > boardHeight - graphHeight() - margin) {
+    item.velY -= turnFactor;
   }
 }
 
 // Find the center of mass of the other boids and adjust velocity slightly to
 // point towards the center of mass.
-function flyTowardsCenter(boid) {
+function flyTowardsCenter(item: Item) {
   let centeringFactor = 0.001; // adjust velocity by this %
   let centerX = 0;
   let centerY = 0;
   let numNeighbors = 0;
 
-  if (boid.value === ZOMBIE) {
+  if (item.value === ItemType.Zombie) {
     centeringFactor = 0.0005;
   }
 
-  for (let otherBoid of board) {
-    if (distance(boid, otherBoid) < visualRange.value) {
-      centerX += otherBoid.x;
-      centerY += otherBoid.y;
+  for (let otherItem of board) {
+    if (distance(item, otherItem) < visualRange.value) {
+      centerX += otherItem.x;
+      centerY += otherItem.y;
       numNeighbors += 1;
     }
   }
@@ -268,17 +286,17 @@ function flyTowardsCenter(boid) {
     centerX = centerX / numNeighbors;
     centerY = centerY / numNeighbors;
 
-    boid.velX += (centerX - boid.x) * centeringFactor;
-    boid.velY += (centerY - boid.y) * centeringFactor;
+    item.velX += (centerX - item.x) * centeringFactor;
+    item.velY += (centerY - item.y) * centeringFactor;
   }
 }
 
 // Move away from other boids that are too close to avoid colliding
-function avoidOthers(boid) {
+function avoidOthers(item: Item) {
   let minDistance = 4; // The distance to stay away from other boids
   let avoidFactor = 0.03; // Adjust velocity by this %
 
-  if (boid.value === ZOMBIE) {
+  if (item.value === ItemType.Zombie) {
     minDistance = 4;
     avoidFactor = 0.03;
   }
@@ -286,34 +304,34 @@ function avoidOthers(boid) {
   let moveX = 0;
   let moveY = 0;
   for (let otherBoid of board) {
-    if (otherBoid !== boid) {
-      if (distance(boid, otherBoid) < minDistance) {
-        moveX += boid.x - otherBoid.x;
-        moveY += boid.y - otherBoid.y;
+    if (otherBoid !== item) {
+      if (distance(item, otherBoid) < minDistance) {
+        moveX += item.x - otherBoid.x;
+        moveY += item.y - otherBoid.y;
       }
     }
   }
 
-  boid.velX += moveX * avoidFactor;
-  boid.velY += moveY * avoidFactor;
+  item.velX += moveX * avoidFactor;
+  item.velY += moveY * avoidFactor;
 }
 
 // Find the average velocity (speed and direction) of the other boids and
 // adjust velocity slightly to match.
-function matchVelocity(boid) {
+function matchVelocity(item: Item) {
   let matchingFactor = 0.05; // Adjust by this % of average velocity
   let avgDX = 0;
   let avgDY = 0;
   let numNeighbors = 0;
 
-  if (boid.value === ZOMBIE) {
+  if (item.value === ItemType.Zombie) {
     matchingFactor = 0.01;
   }
 
-  for (let otherBoid of board) {
-    if (distance(boid, otherBoid) < visualRange.value) {
-      avgDX += otherBoid.velX;
-      avgDY += otherBoid.velY;
+  for (let otherItem of board) {
+    if (distance(item, otherItem) < visualRange.value) {
+      avgDX += otherItem.velX;
+      avgDY += otherItem.velY;
       numNeighbors += 1;
     }
   }
@@ -322,30 +340,30 @@ function matchVelocity(boid) {
     avgDX = avgDX / numNeighbors;
     avgDY = avgDY / numNeighbors;
 
-    boid.velX += (avgDX - boid.velX) * matchingFactor;
-    boid.velY += (avgDY - boid.velY) * matchingFactor;
+    item.velX += (avgDX - item.velX) * matchingFactor;
+    item.velY += (avgDY - item.velY) * matchingFactor;
   }
 }
 
 // Speed will naturally vary in flocking behavior, but real animals can't go
 // arbitrarily fast.
-function limitSpeed(boid) {
+function limitSpeed(item: Item) {
   let speedLimit = 1;
 
-  if (boid.value === ZOMBIE) {
+  if (item.value === ItemType.Zombie) {
     speedLimit = 0.3;
   }
 
-  const speed = Math.sqrt(boid.velX * boid.velX + boid.velY * boid.velY);
+  const speed = Math.sqrt(item.velX * item.velX + item.velY * item.velY);
 
   if (speed > speedLimit) {
-    boid.velX = (boid.velX / speed) * speedLimit;
-    boid.velY = (boid.velY / speed) * speedLimit;
+    item.velX = (item.velX / speed) * speedLimit;
+    item.velY = (item.velY / speed) * speedLimit;
   }
 }
 
 function loop() {
-  board.forEach((item) => {
+  board.forEach((item: Item) => {
     if (item.cooldown === 0) {
       flyTowardsCenter(item);
       avoidOthers(item);
@@ -362,16 +380,16 @@ function loop() {
     const nearbys = countNearby(item);
 
     switch (item.value) {
-      case CORPSE:
+      case ItemType.Corpse:
         updateCorpse(item, nearbys);
         break;
-      case CIVILIAN:
+      case ItemType.Civilian:
         updateCivilian(item, nearbys);
         break;
-      case MEDIC:
+      case ItemType.Medic:
         updateMedic(item, nearbys);
         break;
-      case ZOMBIE:
+      case ItemType.Zombie:
         updateZombie(item, nearbys);
         break;
     }
@@ -382,36 +400,36 @@ function loop() {
   }
 }
 
-function updateCorpse(item, nearbys) {
+function updateCorpse(item: Item, nearbys: Nearbys): void {
   if (item.cooldown === 0) {
-    item.value = ZOMBIE;
+    item.value = ItemType.Zombie;
     item.velX = randomVel();
     item.velY = randomVel();
   }
 
-  if (nearbys[MEDIC] > 0 && item.cooldown < 100) {
-    item.value = CIVILIAN;
+  if (nearbys[ItemType.Medic] > 0 && item.cooldown < 100) {
+    item.value = ItemType.Civilian;
     item.velX = randomVel();
     item.velY = randomVel();
   }
 }
 
-function updateCivilian(item, nearbys) {
+function updateCivilian(item: Item, nearbys: Nearbys): void {
   // If there's a medic nearby, you learn
-  if (nearbys[MEDIC] > 0) {
+  if (nearbys[ItemType.Medic] > 0) {
     item.training += 1;
   }
 
   if (item.training > 100) {
-    item.value = MEDIC;
+    item.value = ItemType.Medic;
     item.velX = randomVel();
     item.velY = randomVel();
     return;
   }
 
   // If there are zombies but not enough civilians, you got got
-  if (nearbys[ZOMBIE] > 0) {
-    item.value = CORPSE;
+  if (nearbys[ItemType.Zombie] > 0) {
+    item.value = ItemType.Corpse;
     item.velX = randomVel();
     item.velY = randomVel();
     item.cooldown = 200;
@@ -419,31 +437,31 @@ function updateCivilian(item, nearbys) {
   }
 }
 
-function updateMedic(item, nearbys) {
+function updateMedic(item: Item, nearbys: Nearbys) {
   // If there are zombies nearby and not enough civilians, you get got
-  if (nearbys[ZOMBIE] > 1 && nearbys[CIVILIAN] < 1) {
-    item.value = ZOMBIE;
+  if (nearbys[ItemType.Zombie] > 1 && nearbys[ItemType.Civilian] < 1) {
+    item.value = ItemType.Zombie;
     item.velX = randomVel();
     item.velY = randomVel();
     item.cooldown = 50;
   }
 }
 
-function updateZombie(item, nearbys) {
-  if (nearbys[MEDIC] > 0) {
-    item.value = CIVILIAN;
+function updateZombie(item: Item, nearbys: Nearbys) {
+  if (nearbys[ItemType.Medic] > 0) {
+    item.value = ItemType.Civilian;
     item.velX = randomVel();
     item.velY = randomVel();
     item.cooldown = 50;
   }
 }
 
-function countNearby(item) {
+function countNearby(item: Item) {
   const results = {
-    [CIVILIAN]: 0,
-    [ZOMBIE]: 0,
-    [CORPSE]: 0,
-    [MEDIC]: 0,
+    [ItemType.Civilian]: 0,
+    [ItemType.Zombie]: 0,
+    [ItemType.Corpse]: 0,
+    [ItemType.Medic]: 0,
     null: 0,
   };
 
@@ -465,10 +483,10 @@ function countNearby(item) {
 
 function countItems() {
   const counts = {
-    [CIVILIAN]: 0,
-    [MEDIC]: 0,
-    [ZOMBIE]: 0,
-    [CORPSE]: 0,
+    [ItemType.Civilian]: 0,
+    [ItemType.Medic]: 0,
+    [ItemType.Zombie]: 0,
+    [ItemType.Corpse]: 0,
   };
 
   board.forEach((item) => {
@@ -482,17 +500,17 @@ function updateCounts() {
   const scaleFactor = board.length / 250;
   const counts = countItems();
 
-  corpseCount.value = counts[CORPSE];
-  corpseFontSize.value = `${20 + counts[CORPSE] / scaleFactor}px`;
+  CorpseCount.value = counts[ItemType.Corpse];
+  CorpseFontSize.value = `${20 + counts[ItemType.Corpse] / scaleFactor}px`;
 
-  civilianCount.value = counts[CIVILIAN];
-  civilianFontSize.value = `${20 + counts[CIVILIAN] / scaleFactor}px`;
+  civilianCount.value = counts[ItemType.Civilian];
+  civilianFontSize.value = `${20 + counts[ItemType.Civilian] / scaleFactor}px`;
 
-  zombieCount.value = counts[ZOMBIE];
-  zombieFontSize.value = `${20 + counts[ZOMBIE] / scaleFactor}px`;
+  zombieCount.value = counts[ItemType.Zombie];
+  zombieFontSize.value = `${20 + counts[ItemType.Zombie] / scaleFactor}px`;
 
-  medicCount.value = counts[MEDIC];
-  medicFontSize.value = `${20 + counts[MEDIC] / scaleFactor}px`;
+  medicCount.value = counts[ItemType.Medic];
+  medicFontSize.value = `${20 + counts[ItemType.Medic] / scaleFactor}px`;
 }
 </script>
 
@@ -566,7 +584,7 @@ function updateCounts() {
     </div>
 
     <div class="counts">
-      <div class="corpse-count">{{ corpseCount }} corpses</div>
+      <div class="Corpse-count">{{ CorpseCount }} Corpses</div>
       <div class="zombie-count">{{ zombieCount }} zombies</div>
       <div class="medic-count">{{ medicCount }} medics</div>
       <div class="civilian-count">{{ civilianCount }} civilians</div>
@@ -617,7 +635,7 @@ canvas {
 .civilian-count {
   color: #aaa;
 }
-.corpse-count {
+.Corpse-count {
   color: #632;
 }
 </style>
