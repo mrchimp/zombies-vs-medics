@@ -524,9 +524,10 @@ function updateCounts() {
       </button>
       <div v-if="showControls">
         <div>
-          <label for="civilianCount"
-            >Civilians [<span v-text="numCivilians"></span>]</label
-          >
+          <label for="civilianCount" class="label">
+            <div>Civilians</div>
+            <div><span v-text="numCivilians"></span></div>
+          </label>
           <input
             type="range"
             min="0"
@@ -536,9 +537,10 @@ function updateCounts() {
           />
         </div>
         <div>
-          <label for="medicCount"
-            >Medics [<span v-text="numMedics"></span>]</label
-          >
+          <label for="medicCount" class="label">
+            <div>Medics</div>
+            <div><span v-text="numMedics"></span></div>
+          </label>
           <input
             type="range"
             min="0"
@@ -548,9 +550,10 @@ function updateCounts() {
           />
         </div>
         <div>
-          <label for="zombieCount"
-            >Zombies [<span v-text="numZombies"></span>]</label
-          >
+          <label for="zombieCount" class="label">
+            <div>Zombies</div>
+            <div><span v-text="numZombies"></span></div>
+          </label>
           <input
             type="range"
             min="0"
@@ -560,8 +563,9 @@ function updateCounts() {
           />
         </div>
         <div>
-          <label for="resolutionScale">
-            Resolution Scale [<span v-text="resolutionScale"></span>]
+          <label for="resolutionScale" class="label">
+            <div>Resolution Scale</div>
+            <div><span v-text="resolutionScale"></span></div>
           </label>
           <input
             type="range"
@@ -572,8 +576,9 @@ function updateCounts() {
           />
         </div>
         <div>
-          <label for="visualRange">
-            Visual Range [<span v-text="visualRange"></span>]
+          <label for="visualRange" class="label">
+            <div>Visual Range</div>
+            <div><span v-text="visualRange"></span></div>
           </label>
           <input type="range" min="1" max="200" v-model="visualRange" />
         </div>
@@ -609,11 +614,16 @@ canvas {
   position: absolute;
   right: 0;
   top: 0;
-  width: 10rem;
+  width: 12rem;
   z-index: 3;
 }
 .controls input {
   width: 100%;
+}
+.label {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
 }
 .counts {
   font-size: 21px;
