@@ -57,6 +57,13 @@ const civilianCenteringFactor = ref(0.001);
 const zombieCenteringFactor = ref(0.0005);
 const medicCenteringFactor = ref(0.001);
 
+const civilianMinDistance = ref(4);
+const civilianAvoidFactor = ref(0.03);
+const medicMinDistance = ref(4);
+const medicAvoidFactor = ref(0.03);
+const zombieMinDistance = ref(4);
+const zombieAvoidFactor = ref(0.03);
+
 const gameTickRateMS = 16;
 
 const bodyScale = 3;
@@ -310,13 +317,25 @@ function avoidOthers(item: Item) {
   let minDistance = 4; // The distance to stay away from other boids
   let avoidFactor = 0.03; // Adjust velocity by this %
 
-  if (item.value === ItemType.Zombie) {
-    minDistance = 4;
-    avoidFactor = 0.03;
+  switch (item.value) {
+    case ItemType.Zombie:
+      minDistance = zombieMinDistance.value;
+      avoidFactor = zombieAvoidFactor.value;
+      break;
+    case ItemType.Medic:
+      minDistance = medicMinDistance.value;
+      avoidFactor = medicAvoidFactor.value;
+      break;
+    case ItemType.Civilian:
+    default:
+      minDistance = civilianMinDistance.value;
+      avoidFactor = civilianAvoidFactor.value;
+      break;
   }
 
   let moveX = 0;
   let moveY = 0;
+
   for (let otherBoid of board) {
     if (otherBoid !== item) {
       if (distance(item, otherBoid) < minDistance) {
@@ -565,6 +584,15 @@ function updateCounts() {
           :max="10"
           @input="reset"
         ></ControlInput>
+
+        <hr />
+
+        <strong>
+          Changing controls above this point will trigger a reset.
+        </strong>
+
+        <hr />
+
         <ControlInput
           label="Visual Range"
           v-model="visualRange"
@@ -590,6 +618,49 @@ function updateCounts() {
         <ControlInput
           label="Zombie Centering Factor"
           v-model="zombieCenteringFactor"
+          :min="0"
+          :max="0.1"
+          :step="0.001"
+        ></ControlInput>
+
+        <!-- Min Distances -->
+        <ControlInput
+          label="Civilian Min Distance"
+          v-model="civilianMinDistance"
+          :min="0"
+          :max="20"
+        ></ControlInput>
+        <ControlInput
+          label="Medic Min Distance"
+          v-model="medicMinDistance"
+          :min="0"
+          :max="20"
+        ></ControlInput>
+        <ControlInput
+          label="Zombie Min Distance"
+          v-model="zombieMinDistance"
+          :min="0"
+          :max="20"
+        ></ControlInput>
+
+        <!-- Avoid Factor -->
+        <ControlInput
+          label="Civilian Avoid Factor"
+          v-model="civilianAvoidFactor"
+          :min="0"
+          :max="0.1"
+          :step="0.001"
+        ></ControlInput>
+        <ControlInput
+          label="Medic Avoid Factor"
+          v-model="medicAvoidFactor"
+          :min="0"
+          :max="0.1"
+          :step="0.001"
+        ></ControlInput>
+        <ControlInput
+          label="Zombie Avoid Factor"
+          v-model="zombieAvoidFactor"
           :min="0"
           :max="0.1"
           :step="0.001"
