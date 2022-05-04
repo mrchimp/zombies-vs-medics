@@ -64,6 +64,10 @@ const medicAvoidFactor = ref(0.03);
 const zombieMinDistance = ref(4);
 const zombieAvoidFactor = ref(0.03);
 
+const civilianVelocityMatchingFactor = ref(0.05);
+const medicVelocityMatchingFactor = ref(0.05);
+const zombieVelocityMatchingFactor = ref(0.01);
+
 const gameTickRateMS = 16;
 
 const bodyScale = 3;
@@ -314,8 +318,8 @@ function flyTowardsCenter(item: Item) {
 
 // Move away from other boids that are too close to avoid colliding
 function avoidOthers(item: Item) {
-  let minDistance = 4; // The distance to stay away from other boids
-  let avoidFactor = 0.03; // Adjust velocity by this %
+  let minDistance; // The distance to stay away from other boids
+  let avoidFactor; // Adjust velocity by this %
 
   switch (item.value) {
     case ItemType.Zombie:
@@ -352,13 +356,22 @@ function avoidOthers(item: Item) {
 // Find the average velocity (speed and direction) of the other boids and
 // adjust velocity slightly to match.
 function matchVelocity(item: Item) {
-  let matchingFactor = 0.05; // Adjust by this % of average velocity
+  let matchingFactor; // Adjust by this % of average velocity
   let avgDX = 0;
   let avgDY = 0;
   let numNeighbors = 0;
 
-  if (item.value === ItemType.Zombie) {
-    matchingFactor = 0.01;
+  switch (item.value) {
+    case ItemType.Zombie:
+      matchingFactor = zombieVelocityMatchingFactor.value;
+      break;
+    case ItemType.Medic:
+      matchingFactor = medicVelocityMatchingFactor.value;
+      break;
+    case ItemType.Civilian:
+    default:
+      matchingFactor = civilianVelocityMatchingFactor.value;
+      break;
   }
 
   for (let otherItem of board) {
@@ -551,123 +564,147 @@ function updateCounts() {
   <div>
     <canvas ref="canvas"></canvas>
 
-    <div class="controls">
-      <button type="button" @click.prevent="showControls = !showControls">
-        {{ showControls ? "HIDE" : "Show controls" }}
-      </button>
-      <div v-if="showControls">
-        <ControlInput
-          label="Civilians"
-          v-model="numCivilians"
-          :min="0"
-          :max="500"
-          @input="reset"
-        ></ControlInput>
-        <ControlInput
-          label="Medics"
-          v-model="numMedics"
-          :min="0"
-          :max="500"
-          @input="reset"
-        ></ControlInput>
-        <ControlInput
-          label="Zombies"
-          v-model="numZombies"
-          :min="0"
-          :max="500"
-          @input="reset"
-        ></ControlInput>
-        <ControlInput
-          label="Resolution Scale"
-          v-model="resolutionScale"
-          :min="1"
-          :max="10"
-          @input="reset"
-        ></ControlInput>
+    <div class="controls" :class="showControls ? 'controls--active' : ''">
+      <div class="controls-inner">
+        <button type="button" @click.prevent="showControls = !showControls">
+          {{ showControls ? "Hide Controls" : "Show controls" }}
+        </button>
+        <div v-if="showControls">
+          <button type="button" @click.prevent="onPause">Pause/Play</button>
+          <button type="button" @click.prevent="reset">Reset</button>
+          <ControlInput
+            label="Civilians"
+            v-model="numCivilians"
+            :min="0"
+            :max="500"
+            @input="reset"
+          ></ControlInput>
+          <ControlInput
+            label="Medics"
+            v-model="numMedics"
+            :min="0"
+            :max="500"
+            @input="reset"
+          ></ControlInput>
+          <ControlInput
+            label="Zombies"
+            v-model="numZombies"
+            :min="0"
+            :max="500"
+            @input="reset"
+          ></ControlInput>
+          <ControlInput
+            label="Resolution Scale"
+            v-model="resolutionScale"
+            :min="1"
+            :max="10"
+            @input="reset"
+          ></ControlInput>
 
-        <hr />
+          <hr />
 
-        <strong>
-          Changing controls above this point will trigger a reset.
-        </strong>
+          <strong>
+            Changing controls above this point will trigger a reset.
+          </strong>
 
-        <hr />
+          <hr />
 
-        <ControlInput
-          label="Visual Range"
-          v-model="visualRange"
-          :min="1"
-          :max="200"
-        ></ControlInput>
+          <ControlInput
+            label="Visual Range"
+            v-model="visualRange"
+            :min="1"
+            :max="200"
+          ></ControlInput>
 
-        <!-- Centering Factors -->
-        <ControlInput
-          label="Civilian Centering Factor"
-          v-model="civilianCenteringFactor"
-          :min="0"
-          :max="0.1"
-          :step="0.001"
-        ></ControlInput>
-        <ControlInput
-          label="Medic Centering Factor"
-          v-model="medicCenteringFactor"
-          :min="0"
-          :max="0.1"
-          :step="0.001"
-        ></ControlInput>
-        <ControlInput
-          label="Zombie Centering Factor"
-          v-model="zombieCenteringFactor"
-          :min="0"
-          :max="0.1"
-          :step="0.001"
-        ></ControlInput>
+          <!-- Centering Factors -->
+          <ControlInput
+            label="Civilian Centering Factor"
+            v-model="civilianCenteringFactor"
+            :min="0"
+            :max="0.1"
+            :step="0.001"
+          ></ControlInput>
+          <ControlInput
+            label="Medic Centering Factor"
+            v-model="medicCenteringFactor"
+            :min="0"
+            :max="0.1"
+            :step="0.001"
+          ></ControlInput>
+          <ControlInput
+            label="Zombie Centering Factor"
+            v-model="zombieCenteringFactor"
+            :min="0"
+            :max="0.1"
+            :step="0.001"
+          ></ControlInput>
 
-        <!-- Min Distances -->
-        <ControlInput
-          label="Civilian Min Distance"
-          v-model="civilianMinDistance"
-          :min="0"
-          :max="20"
-        ></ControlInput>
-        <ControlInput
-          label="Medic Min Distance"
-          v-model="medicMinDistance"
-          :min="0"
-          :max="20"
-        ></ControlInput>
-        <ControlInput
-          label="Zombie Min Distance"
-          v-model="zombieMinDistance"
-          :min="0"
-          :max="20"
-        ></ControlInput>
+          <!-- Min Distances -->
+          <ControlInput
+            label="Civilian Min Distance"
+            v-model="civilianMinDistance"
+            :min="0"
+            :max="20"
+          ></ControlInput>
+          <ControlInput
+            label="Medic Min Distance"
+            v-model="medicMinDistance"
+            :min="0"
+            :max="20"
+          ></ControlInput>
+          <ControlInput
+            label="Zombie Min Distance"
+            v-model="zombieMinDistance"
+            :min="0"
+            :max="20"
+          ></ControlInput>
 
-        <!-- Avoid Factor -->
-        <ControlInput
-          label="Civilian Avoid Factor"
-          v-model="civilianAvoidFactor"
-          :min="0"
-          :max="0.1"
-          :step="0.001"
-        ></ControlInput>
-        <ControlInput
-          label="Medic Avoid Factor"
-          v-model="medicAvoidFactor"
-          :min="0"
-          :max="0.1"
-          :step="0.001"
-        ></ControlInput>
-        <ControlInput
-          label="Zombie Avoid Factor"
-          v-model="zombieAvoidFactor"
-          :min="0"
-          :max="0.1"
-          :step="0.001"
-        ></ControlInput>
+          <!-- Avoid Factor -->
+          <ControlInput
+            label="Civilian Avoid Factor"
+            v-model="civilianAvoidFactor"
+            :min="0"
+            :max="0.1"
+            :step="0.001"
+          ></ControlInput>
+          <ControlInput
+            label="Medic Avoid Factor"
+            v-model="medicAvoidFactor"
+            :min="0"
+            :max="0.1"
+            :step="0.001"
+          ></ControlInput>
+          <ControlInput
+            label="Zombie Avoid Factor"
+            v-model="zombieAvoidFactor"
+            :min="0"
+            :max="0.1"
+            :step="0.001"
+          ></ControlInput>
 
-        <button @click.prevent="onPause">Pause/Play</button>
-        <button @click.prevent="reset">Reset</button>
+          <!-- Velocity Matching -->
+          <ControlInput
+            label="Civilian Velocity Matching"
+            v-model="civilianVelocityMatchingFactor"
+            :min="0"
+            :max="0.1"
+            :step="0.001"
+          ></ControlInput>
+          <ControlInput
+            label="Medic Velocity Matching"
+            v-model="medicVelocityMatchingFactor"
+            :min="0"
+            :max="0.1"
+            :step="0.001"
+          ></ControlInput>
+          <ControlInput
+            label="Zombie Velocity Matching"
+            v-model="zombieVelocityMatchingFactor"
+            :min="0"
+            :max="0.1"
+            :step="0.001"
+          ></ControlInput>
+        </div>
       </div>
     </div>
 
@@ -692,13 +729,20 @@ canvas {
   background: white;
   display: flex;
   flex-direction: column;
+  height: auto;
+  overflow-y: scroll;
   opacity: 0.5;
-  padding: 0.5rem;
   position: absolute;
   right: 0;
   top: 0;
-  width: 12rem;
   z-index: 3;
+}
+.controls--active {
+  height: 100%;
+  width: 18rem;
+}
+.controls-inner {
+  padding: 0.5rem;
 }
 .counts {
   font-size: 21px;
