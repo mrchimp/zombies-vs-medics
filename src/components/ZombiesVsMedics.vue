@@ -44,8 +44,8 @@ const numCorpses = ref(0);
 const resolutionScale = ref(2);
 let graphTickCount = 0;
 
-const CorpseCount = ref(0);
-const CorpseFontSize = ref("");
+const corpseCount = ref(0);
+const corpseFontSize = ref("");
 const zombieCount = ref(0);
 const zombieFontSize = ref("");
 const medicCount = ref(0);
@@ -543,11 +543,11 @@ function countItems() {
 }
 
 function updateCounts() {
-  const scaleFactor = board.length / 250;
+  const scaleFactor = board.length / 150;
   const counts = countItems();
 
-  CorpseCount.value = counts[ItemType.Corpse];
-  CorpseFontSize.value = `${20 + counts[ItemType.Corpse] / scaleFactor}px`;
+  corpseCount.value = counts[ItemType.Corpse];
+  corpseFontSize.value = `${20 + counts[ItemType.Corpse] / scaleFactor}px`;
 
   civilianCount.value = counts[ItemType.Civilian];
   civilianFontSize.value = `${20 + counts[ItemType.Civilian] / scaleFactor}px`;
@@ -709,10 +709,38 @@ function updateCounts() {
     </div>
 
     <div class="counts">
-      <div class="Corpse-count">{{ CorpseCount }} Corpses</div>
-      <div class="zombie-count">{{ zombieCount }} zombies</div>
-      <div class="medic-count">{{ medicCount }} medics</div>
-      <div class="civilian-count">{{ civilianCount }} civilians</div>
+      <div
+        class="Corpse-count"
+        :style="{
+          'font-size': corpseFontSize,
+        }"
+      >
+        {{ corpseCount }} Corpses
+      </div>
+      <div
+        class="zombie-count"
+        :style="{
+          'font-size': civilianFontSize,
+        }"
+      >
+        {{ zombieCount }} zombies
+      </div>
+      <div
+        class="medic-count"
+        :style="{
+          'font-size': zombieFontSize,
+        }"
+      >
+        {{ medicCount }} medics
+      </div>
+      <div
+        class="civilian-count"
+        :style="{
+          'font-size': medicFontSize,
+        }"
+      >
+        {{ civilianCount }} civilians
+      </div>
     </div>
   </div>
 </template>
