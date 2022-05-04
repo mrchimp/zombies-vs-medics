@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import ControlInput from "./ControlInput.vue";
 
 enum ItemType {
   Corpse = 0,
@@ -523,65 +524,40 @@ function updateCounts() {
         {{ showControls ? "HIDE" : "Show controls" }}
       </button>
       <div v-if="showControls">
-        <div>
-          <label for="civilianCount" class="label">
-            <div>Civilians</div>
-            <div><span v-text="numCivilians"></span></div>
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="500"
-            v-model="numCivilians"
-            @input="reset"
-          />
-        </div>
-        <div>
-          <label for="medicCount" class="label">
-            <div>Medics</div>
-            <div><span v-text="numMedics"></span></div>
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="500"
-            v-model="numMedics"
-            @input="reset"
-          />
-        </div>
-        <div>
-          <label for="zombieCount" class="label">
-            <div>Zombies</div>
-            <div><span v-text="numZombies"></span></div>
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="500"
-            v-model="numZombies"
-            @input="reset"
-          />
-        </div>
-        <div>
-          <label for="resolutionScale" class="label">
-            <div>Resolution Scale</div>
-            <div><span v-text="resolutionScale"></span></div>
-          </label>
-          <input
-            type="range"
-            min="1"
-            max="10"
-            v-model="resolutionScale"
-            @input="reset"
-          />
-        </div>
-        <div>
-          <label for="visualRange" class="label">
-            <div>Visual Range</div>
-            <div><span v-text="visualRange"></span></div>
-          </label>
-          <input type="range" min="1" max="200" v-model="visualRange" />
-        </div>
+        <ControlInput
+          label="Civilians"
+          v-model="numCivilians"
+          :min="0"
+          :max="500"
+          @input="reset"
+        ></ControlInput>
+        <ControlInput
+          label="Medics"
+          v-model="numMedics"
+          :min="0"
+          :max="500"
+          @input="reset"
+        ></ControlInput>
+        <ControlInput
+          label="Zombies"
+          v-model="numZombies"
+          :min="0"
+          :max="500"
+          @input="reset"
+        ></ControlInput>
+        <ControlInput
+          label="Resolution Scale"
+          v-model="resolutionScale"
+          :min="1"
+          :max="10"
+          @input="reset"
+        ></ControlInput>
+        <ControlInput
+          label="Visual Range"
+          v-model="visualRange"
+          :min="1"
+          :max="200"
+        ></ControlInput>
 
         <button @click.prevent="onPause">Pause/Play</button>
         <button @click.prevent="reset">Reset</button>
@@ -616,14 +592,6 @@ canvas {
   top: 0;
   width: 12rem;
   z-index: 3;
-}
-.controls input {
-  width: 100%;
-}
-.label {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 5px;
 }
 .counts {
   font-size: 21px;
