@@ -720,7 +720,7 @@ function updateCounts() {
       <div
         class="zombie-count"
         :style="{
-          'font-size': civilianFontSize,
+          'font-size': zombieFontSize,
         }"
       >
         {{ zombieCount }} zombies
@@ -728,7 +728,7 @@ function updateCounts() {
       <div
         class="medic-count"
         :style="{
-          'font-size': zombieFontSize,
+          'font-size': medicFontSize,
         }"
       >
         {{ medicCount }} medics
@@ -736,7 +736,7 @@ function updateCounts() {
       <div
         class="civilian-count"
         :style="{
-          'font-size': medicFontSize,
+          'font-size': civlianFontSize,
         }"
       >
         {{ civilianCount }} civilians
