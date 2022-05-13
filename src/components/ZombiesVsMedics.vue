@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import ControlInput from "./ControlInput.vue";
+import ControlGroup from "./ControlGroup.vue";
 
 enum ItemType {
   Corpse = 0,
@@ -37,35 +38,35 @@ interface Nearbys {
 
 const showControls = ref(false);
 
-const numCivilians = ref(100);
-const numZombies = ref(50);
-const numMedics = ref(5);
-const numCorpses = ref(0);
 const resolutionScale = ref(2);
 let graphTickCount = 0;
 
+const numCorpses = ref(0);
 const corpseCount = ref(0);
 const corpseFontSize = ref("");
-const zombieCount = ref(0);
-const zombieFontSize = ref("");
-const medicCount = ref(0);
-const medicFontSize = ref("");
+
+const numCivilians = ref(100);
 const civilianCount = ref(0);
 const civilianFontSize = ref("");
-
 const civilianCenteringFactor = ref(0.001);
-const zombieCenteringFactor = ref(0.0005);
-const medicCenteringFactor = ref(0.001);
-
 const civilianMinDistance = ref(4);
 const civilianAvoidFactor = ref(0.03);
+const civilianVelocityMatchingFactor = ref(0.005);
+
+const numMedics = ref(5);
+const medicCount = ref(0);
+const medicFontSize = ref("");
+const medicCenteringFactor = ref(0.001);
 const medicMinDistance = ref(4);
 const medicAvoidFactor = ref(0.03);
+const medicVelocityMatchingFactor = ref(0.005);
+
+const numZombies = ref(50);
+const zombieCount = ref(0);
+const zombieFontSize = ref("");
+const zombieCenteringFactor = ref(0.0005);
 const zombieMinDistance = ref(4);
 const zombieAvoidFactor = ref(0.03);
-
-const civilianVelocityMatchingFactor = ref(0.05);
-const medicVelocityMatchingFactor = ref(0.05);
 const zombieVelocityMatchingFactor = ref(0.01);
 
 const gameTickRateMS = 16;
@@ -561,7 +562,7 @@ function updateCounts() {
 </script>
 
 <template>
-  <div>
+  <div class="zombies">
     <canvas ref="canvas"></canvas>
 
     <div class="controls" :class="showControls ? 'controls--active' : ''">
@@ -572,145 +573,168 @@ function updateCounts() {
         <div v-if="showControls">
           <button type="button" @click.prevent="onPause">Pause/Play</button>
           <button type="button" @click.prevent="reset">Reset</button>
-          <ControlInput
-            label="Civilians"
-            v-model="numCivilians"
-            :min="0"
-            :max="500"
-            @input="reset"
-          ></ControlInput>
-          <ControlInput
-            label="Medics"
-            v-model="numMedics"
-            :min="0"
-            :max="500"
-            @input="reset"
-          ></ControlInput>
-          <ControlInput
-            label="Zombies"
-            v-model="numZombies"
-            :min="0"
-            :max="500"
-            @input="reset"
-          ></ControlInput>
-          <ControlInput
-            label="Resolution Scale"
-            v-model="resolutionScale"
-            :min="1"
-            :max="10"
-            @input="reset"
-          ></ControlInput>
-
-          <hr />
-
-          <strong>
-            Changing controls above this point will trigger a reset.
-          </strong>
+          <ControlGroup label="Simulation settings">
+            <strong>
+              Warning: changing controls in this section will restart the
+              simulation!
+            </strong>
+            <hr />
+            <ControlInput
+              label="Civilians"
+              title="How many civilians the simulation will start with"
+              v-model="numCivilians"
+              :min="0"
+              :max="500"
+              @input="reset"
+            ></ControlInput>
+            <ControlInput
+              label="Medics"
+              title="How many medics the simulation will start with"
+              v-model="numMedics"
+              :min="0"
+              :max="500"
+              @input="reset"
+            ></ControlInput>
+            <ControlInput
+              label="Zombies"
+              title="How many zombies the simulation will start with"
+              v-model="numZombies"
+              :min="0"
+              :max="500"
+              @input="reset"
+            ></ControlInput>
+            <ControlInput
+              label="Resolution Scale"
+              title="Increasing this will increase the pixelation but improve performance"
+              v-model="resolutionScale"
+              :min="1"
+              :max="10"
+              @input="reset"
+            ></ControlInput>
+          </ControlGroup>
 
           <hr />
 
           <ControlInput
             label="Visual Range"
+            title="Maximum distance that players will be affected by others"
             v-model="visualRange"
             :min="1"
             :max="200"
           ></ControlInput>
 
-          <!-- Centering Factors -->
-          <ControlInput
-            label="Civilian Centering Factor"
-            v-model="civilianCenteringFactor"
-            :min="0"
-            :max="0.1"
-            :step="0.001"
-          ></ControlInput>
-          <ControlInput
-            label="Medic Centering Factor"
-            v-model="medicCenteringFactor"
-            :min="0"
-            :max="0.1"
-            :step="0.001"
-          ></ControlInput>
-          <ControlInput
-            label="Zombie Centering Factor"
-            v-model="zombieCenteringFactor"
-            :min="0"
-            :max="0.1"
-            :step="0.001"
-          ></ControlInput>
+          <ControlGroup label="Civilian Options">
+            <ControlInput
+              label="Centering Factor"
+              title="How much the civilians will be pulled towards groups"
+              v-model="civilianCenteringFactor"
+              :min="0"
+              :max="0.1"
+              :step="0.001"
+            ></ControlInput>
+            <ControlInput
+              label="Min Distance"
+              title="How close civilians are allowed to be to others"
+              v-model="civilianMinDistance"
+              :min="0"
+              :max="20"
+            ></ControlInput>
+            <ControlInput
+              label="Avoid Factor"
+              title="How actively civilians try to avoid being too close to each other"
+              v-model="civilianAvoidFactor"
+              :min="0"
+              :max="0.1"
+              :step="0.001"
+            ></ControlInput>
+            <ControlInput
+              label="Velocity Matching"
+              title="How much civilians will try to match the velocity of others"
+              v-model="civilianVelocityMatchingFactor"
+              :min="0"
+              :max="0.1"
+              :step="0.001"
+            ></ControlInput>
+          </ControlGroup>
 
-          <!-- Min Distances -->
-          <ControlInput
-            label="Civilian Min Distance"
-            v-model="civilianMinDistance"
-            :min="0"
-            :max="20"
-          ></ControlInput>
-          <ControlInput
-            label="Medic Min Distance"
-            v-model="medicMinDistance"
-            :min="0"
-            :max="20"
-          ></ControlInput>
-          <ControlInput
-            label="Zombie Min Distance"
-            v-model="zombieMinDistance"
-            :min="0"
-            :max="20"
-          ></ControlInput>
+          <ControlGroup label="Medic Options">
+            <ControlInput
+              label="Centering Factor"
+              title="How much the medics will be pulled towards groups"
+              v-model="medicCenteringFactor"
+              :min="0"
+              :max="0.1"
+              :step="0.001"
+            ></ControlInput>
+            <ControlInput
+              label="Min Distance"
+              title="How close medics are allowed to be to others"
+              v-model="medicMinDistance"
+              :min="0"
+              :max="20"
+            ></ControlInput>
+            <ControlInput
+              label="Avoid Factor"
+              title="How actively medics try to avoid being too close to each other"
+              v-model="medicAvoidFactor"
+              :min="0"
+              :max="0.1"
+              :step="0.001"
+            ></ControlInput>
+            <ControlInput
+              label="Velocity Matching"
+              title="How much medics will try to match the velocity of others"
+              v-model="medicVelocityMatchingFactor"
+              :min="0"
+              :max="0.1"
+              :step="0.001"
+            ></ControlInput>
+          </ControlGroup>
 
-          <!-- Avoid Factor -->
-          <ControlInput
-            label="Civilian Avoid Factor"
-            v-model="civilianAvoidFactor"
-            :min="0"
-            :max="0.1"
-            :step="0.001"
-          ></ControlInput>
-          <ControlInput
-            label="Medic Avoid Factor"
-            v-model="medicAvoidFactor"
-            :min="0"
-            :max="0.1"
-            :step="0.001"
-          ></ControlInput>
-          <ControlInput
-            label="Zombie Avoid Factor"
-            v-model="zombieAvoidFactor"
-            :min="0"
-            :max="0.1"
-            :step="0.001"
-          ></ControlInput>
+          <ControlGroup label="Zombie Options">
+            <ControlInput
+              label="Centering Factor"
+              title="How much the zombies will be pulled towards groups"
+              v-model="zombieCenteringFactor"
+              :min="0"
+              :max="0.1"
+              :step="0.001"
+            ></ControlInput>
+            <ControlInput
+              label="Min Distance"
+              title="How close zombies are allowed to be to others"
+              v-model="zombieMinDistance"
+              :min="0"
+              :max="20"
+            ></ControlInput>
+            <ControlInput
+              label="Avoid Factor"
+              title="How actively zombies try to avoid being too close to each other"
+              v-model="zombieAvoidFactor"
+              :min="0"
+              :max="0.1"
+              :step="0.001"
+            ></ControlInput>
+            <ControlInput
+              label="Velocity Matching"
+              title="How much zombies will try to match the velocity of others"
+              v-model="zombieVelocityMatchingFactor"
+              :min="0"
+              :max="0.1"
+              :step="0.001"
+            ></ControlInput>
+          </ControlGroup>
 
-          <!-- Velocity Matching -->
-          <ControlInput
-            label="Civilian Velocity Matching"
-            v-model="civilianVelocityMatchingFactor"
-            :min="0"
-            :max="0.1"
-            :step="0.001"
-          ></ControlInput>
-          <ControlInput
-            label="Medic Velocity Matching"
-            v-model="medicVelocityMatchingFactor"
-            :min="0"
-            :max="0.1"
-            :step="0.001"
-          ></ControlInput>
-          <ControlInput
-            label="Zombie Velocity Matching"
-            v-model="zombieVelocityMatchingFactor"
-            :min="0"
-            :max="0.1"
-            :step="0.001"
-          ></ControlInput>
+          <ControlGroup label="Corpse Options">
+            <!--  -->
+          </ControlGroup>
         </div>
       </div>
     </div>
 
     <div class="counts">
       <div
-        class="Corpse-count"
+        class="corpse-count"
         :style="{
           'font-size': corpseFontSize,
         }"
@@ -746,6 +770,16 @@ function updateCounts() {
 </template>
 
 <style scoped>
+.zombies {
+  --zombie-color: hsl(1, 100%, 65%);
+  --medic-color: hsl(212, 99%, 70%);
+  --civilian-color: hsl(68, 100%, 65%);
+  --corpse-color: hsl(0, 0%, 255%, 0.2);
+}
+hr {
+  color: #eee;
+  margin: 2rem 0;
+}
 canvas {
   position: absolute;
   width: 100%;
@@ -759,7 +793,7 @@ canvas {
   flex-direction: column;
   height: auto;
   overflow-y: scroll;
-  opacity: 0.5;
+  opacity: 0.7;
   position: absolute;
   right: 0;
   top: 0;
@@ -767,7 +801,7 @@ canvas {
 }
 .controls--active {
   height: 100%;
-  width: 18rem;
+  width: 24rem;
 }
 .controls-inner {
   padding: 0.5rem;
@@ -776,7 +810,7 @@ canvas {
   font-size: 21px;
   font-weight: bold;
   left: 0;
-  opacity: 0.7;
+  opacity: 0.5;
   padding: 10px;
   position: absolute;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);

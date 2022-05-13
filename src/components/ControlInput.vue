@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-const props = defineProps(["label", "modelValue", "min", "max", "step"]);
+const props = defineProps([
+  "label",
+  "modelValue",
+  "min",
+  "max",
+  "step",
+  "title",
+]);
 const emit = defineEmits(["update:modelValue"]);
 
 function onInput(e: InputEvent) {
@@ -11,7 +18,7 @@ function onInput(e: InputEvent) {
 
 <template>
   <div>
-    <label for="medicCount" class="control-label">
+    <label for="medicCount" class="control-label" :title="title">
       <div>{{ props.label }}</div>
       <div>{{ props.modelValue }}</div>
     </label>
