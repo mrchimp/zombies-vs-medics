@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 const props = defineProps([
   "label",
@@ -8,16 +8,30 @@ const props = defineProps([
   "max",
   "step",
   "title",
+  "type",
 ]);
 const emit = defineEmits(["update:modelValue"]);
 
 function onInput(e: InputEvent) {
   emit("update:modelValue", (<HTMLInputElement>e.target).value);
 }
+
+const classes = computed(() => {
+  switch (props.type) {
+    case "medic":
+      return "highlight-medic";
+    case "zombie":
+      return "highlight-zombie";
+    case "civilian":
+      return "highlight-civilian";
+    default:
+      return "highlight-regular";
+  }
+});
 </script>
 
 <template>
-  <div>
+  <div :class="classes">
     <label for="medicCount" class="control-label" :title="title">
       <div>{{ props.label }}</div>
       <div>{{ props.modelValue }}</div>
@@ -42,5 +56,17 @@ function onInput(e: InputEvent) {
   display: flex;
   justify-content: space-between;
   margin-top: 5px;
+}
+.highlight-medic input {
+  accent-color: var(--medic-color);
+}
+.highlight-zombie input {
+  accent-color: var(--zombie-color);
+}
+.highlight-civilian input {
+  accent-color: var(--civilian-color);
+}
+.highlight-regular input {
+  accent-color: #666;
 }
 </style>

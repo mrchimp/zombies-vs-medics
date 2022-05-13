@@ -638,7 +638,7 @@ function updateCounts() {
   <div class="zombies">
     <canvas ref="canvas"></canvas>
 
-    <div class="controls">
+    <div class="controls" :class="showControls ? 'controls--active' : ''">
       <button
         v-if="!showControls"
         type="button"
@@ -670,6 +670,7 @@ function updateCounts() {
                 v-model="numCivilians"
                 :min="0"
                 :max="500"
+                type="civilian"
                 @input="reset"
               ></ControlInput>
               <ControlInput
@@ -678,6 +679,7 @@ function updateCounts() {
                 v-model="numMedics"
                 :min="0"
                 :max="500"
+                type="medic"
                 @input="reset"
               ></ControlInput>
               <ControlInput
@@ -686,6 +688,7 @@ function updateCounts() {
                 v-model="numZombies"
                 :min="0"
                 :max="500"
+                type="zombie"
                 @input="reset"
               ></ControlInput>
               <ControlInput
@@ -716,6 +719,7 @@ function updateCounts() {
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
+                type="civilian"
               ></ControlInput>
               <ControlInput
                 label="Medic Attraction"
@@ -724,6 +728,7 @@ function updateCounts() {
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
+                type="civilian"
               ></ControlInput>
               <ControlInput
                 label="Zombie Attraction"
@@ -732,6 +737,7 @@ function updateCounts() {
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
+                type="civilian"
               ></ControlInput>
               <ControlInput
                 label="Min Distance"
@@ -739,6 +745,7 @@ function updateCounts() {
                 v-model="civilianMinDistance"
                 :min="0"
                 :max="20"
+                type="civilian"
               ></ControlInput>
               <ControlInput
                 label="Avoid Factor"
@@ -747,6 +754,7 @@ function updateCounts() {
                 :min="0"
                 :max="0.1"
                 :step="0.001"
+                type="civilian"
               ></ControlInput>
               <ControlInput
                 label="Velocity Matching"
@@ -755,6 +763,7 @@ function updateCounts() {
                 :min="0"
                 :max="0.1"
                 :step="0.001"
+                type="civilian"
               ></ControlInput>
               <ControlInput
                 label="Max Speed"
@@ -763,6 +772,7 @@ function updateCounts() {
                 :min="0"
                 :max="2"
                 :step="0.001"
+                type="civilian"
               ></ControlInput>
             </ControlGroup>
 
@@ -774,6 +784,7 @@ function updateCounts() {
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
+                type="medic"
               ></ControlInput>
               <ControlInput
                 label="Medic Attraction"
@@ -782,6 +793,7 @@ function updateCounts() {
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
+                type="medic"
               ></ControlInput>
               <ControlInput
                 label="Zombie Attraction"
@@ -790,6 +802,7 @@ function updateCounts() {
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
+                type="medic"
               ></ControlInput>
               <ControlInput
                 label="Min Distance"
@@ -797,6 +810,7 @@ function updateCounts() {
                 v-model="medicMinDistance"
                 :min="0"
                 :max="20"
+                type="medic"
               ></ControlInput>
               <ControlInput
                 label="Avoid Factor"
@@ -805,6 +819,7 @@ function updateCounts() {
                 :min="0"
                 :max="0.1"
                 :step="0.001"
+                type="medic"
               ></ControlInput>
               <ControlInput
                 label="Velocity Matching"
@@ -813,6 +828,7 @@ function updateCounts() {
                 :min="0"
                 :max="0.1"
                 :step="0.001"
+                type="medic"
               ></ControlInput>
               <ControlInput
                 label="Max Speed"
@@ -821,6 +837,7 @@ function updateCounts() {
                 :min="0"
                 :max="2"
                 :step="0.001"
+                type="medic"
               ></ControlInput>
             </ControlGroup>
 
@@ -832,6 +849,7 @@ function updateCounts() {
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
+                type="zombie"
               ></ControlInput>
               <ControlInput
                 label="Medic Attraction"
@@ -840,6 +858,7 @@ function updateCounts() {
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
+                type="zombie"
               ></ControlInput>
               <ControlInput
                 label="Zombie Attraction"
@@ -848,6 +867,7 @@ function updateCounts() {
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
+                type="zombie"
               ></ControlInput>
               <ControlInput
                 label="Min Distance"
@@ -855,6 +875,7 @@ function updateCounts() {
                 v-model="zombieMinDistance"
                 :min="0"
                 :max="20"
+                type="zombie"
               ></ControlInput>
               <ControlInput
                 label="Avoid Factor"
@@ -863,6 +884,7 @@ function updateCounts() {
                 :min="0"
                 :max="0.1"
                 :step="0.001"
+                type="zombie"
               ></ControlInput>
               <ControlInput
                 label="Velocity Matching"
@@ -871,6 +893,7 @@ function updateCounts() {
                 :min="0"
                 :max="0.1"
                 :step="0.001"
+                type="zombie"
               ></ControlInput>
               <ControlInput
                 label="Max Speed"
@@ -879,6 +902,7 @@ function updateCounts() {
                 :min="0"
                 :max="2"
                 :step="0.001"
+                type="zombie"
               ></ControlInput>
             </ControlGroup>
           </div>
@@ -924,12 +948,6 @@ function updateCounts() {
 </template>
 
 <style scoped>
-.zombies {
-  --zombie-color: hsl(1, 100%, 65%);
-  --medic-color: hsl(212, 99%, 70%);
-  --civilian-color: hsl(68, 100%, 65%);
-  --corpse-color: hsl(0, 0%, 255%, 0.2);
-}
 hr {
   color: #eee;
   margin: 2rem 0;
@@ -963,6 +981,9 @@ canvas {
   right: 0;
   top: 0;
   z-index: 3;
+}
+.controls--active {
+  height: 100%;
 }
 .controls-inner {
   height: 100%;
