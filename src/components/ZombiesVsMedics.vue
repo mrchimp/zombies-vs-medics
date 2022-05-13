@@ -136,7 +136,7 @@ function updateScale() {
 }
 
 function graphHeight() {
-  return 100;
+  return 50;
 }
 
 function randomVel() {
@@ -734,7 +734,7 @@ function updateCounts() {
 
     <div class="counts">
       <div
-        class="corpse-count"
+        class="count corpse-count"
         :style="{
           'font-size': corpseFontSize,
         }"
@@ -742,7 +742,7 @@ function updateCounts() {
         {{ corpseCount }} Corpses
       </div>
       <div
-        class="zombie-count"
+        class="count zombie-count"
         :style="{
           'font-size': zombieFontSize,
         }"
@@ -750,7 +750,7 @@ function updateCounts() {
         {{ zombieCount }} zombies
       </div>
       <div
-        class="medic-count"
+        class="count medic-count"
         :style="{
           'font-size': medicFontSize,
         }"
@@ -758,7 +758,7 @@ function updateCounts() {
         {{ medicCount }} medics
       </div>
       <div
-        class="civilian-count"
+        class="count civilian-count"
         :style="{
           'font-size': civlianFontSize,
         }"
@@ -788,12 +788,12 @@ canvas {
   z-index: 1;
 }
 .controls {
-  background: white;
+  background: hsla(258, 57%, 10%, 0.95);
+  color: #fff;
   display: flex;
   flex-direction: column;
   height: auto;
   overflow-y: scroll;
-  opacity: 0.7;
   position: absolute;
   right: 0;
   top: 0;
@@ -810,12 +810,17 @@ canvas {
   font-size: 21px;
   font-weight: bold;
   left: 0;
+  line-height: 1;
   opacity: 0.5;
   padding: 10px;
   position: absolute;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
   top: 0;
+  transform: translateZ(0);
   z-index: 2;
+}
+.count {
+  margin-top: 0.1em;
 }
 .zombie-count {
   color: var(--zombie-color);
