@@ -36,6 +36,33 @@ interface Nearbys {
   [ItemType.Medic]: number;
 }
 
+interface CenteringFactors {
+  [ItemType.Civilian]: {
+    [ItemType.Civilian]: ItemType;
+    [ItemType.Medic]: ItemType;
+    [ItemType.Zombie]: ItemType;
+    [ItemType.Corpse]: ItemType;
+  };
+  [ItemType.Zombie]: {
+    [ItemType.Civilian]: ItemType;
+    [ItemType.Medic]: ItemType;
+    [ItemType.Zombie]: ItemType;
+    [ItemType.Corpse]: ItemType;
+  };
+  [ItemType.Medic]: {
+    [ItemType.Civilian]: ItemType;
+    [ItemType.Medic]: ItemType;
+    [ItemType.Zombie]: ItemType;
+    [ItemType.Corpse]: ItemType;
+  };
+  [ItemType.Corpse]: {
+    [ItemType.Civilian]: ItemType;
+    [ItemType.Medic]: ItemType;
+    [ItemType.Zombie]: ItemType;
+    [ItemType.Corpse]: ItemType;
+  };
+}
+
 const showControls = ref(false);
 
 const resolutionScale = ref(2);
@@ -48,26 +75,53 @@ const corpseFontSize = ref("");
 const numCivilians = ref(100);
 const civilianCount = ref(0);
 const civilianFontSize = ref("");
-const civilianCenteringFactor = ref(0.001);
 const civilianMinDistance = ref(4);
 const civilianAvoidFactor = ref(0.03);
 const civilianVelocityMatchingFactor = ref(0.005);
+const civilianSpeedLimit = ref(0.8);
 
 const numMedics = ref(5);
 const medicCount = ref(0);
 const medicFontSize = ref("");
-const medicCenteringFactor = ref(0.001);
 const medicMinDistance = ref(4);
 const medicAvoidFactor = ref(0.03);
 const medicVelocityMatchingFactor = ref(0.005);
+const medicSpeedLimit = ref(0.8);
 
 const numZombies = ref(50);
 const zombieCount = ref(0);
 const zombieFontSize = ref("");
-const zombieCenteringFactor = ref(0.0005);
 const zombieMinDistance = ref(4);
 const zombieAvoidFactor = ref(0.03);
 const zombieVelocityMatchingFactor = ref(0.01);
+const zombieSpeedLimit = ref(0.4);
+
+const centeringFactors = ref<CenteringFactors>({
+  [ItemType.Civilian]: {
+    [ItemType.Civilian]: 0.001,
+    [ItemType.Medic]: 0.001,
+    [ItemType.Zombie]: -0.001,
+    [ItemType.Corpse]: 0,
+  },
+  [ItemType.Zombie]: {
+    [ItemType.Civilian]: 0.001,
+    [ItemType.Medic]: 0.001,
+    [ItemType.Zombie]: 0.001,
+    [ItemType.Corpse]: 0.001,
+  },
+  [ItemType.Medic]: {
+    [ItemType.Civilian]: 0.001,
+    [ItemType.Medic]: 0.001,
+    [ItemType.Zombie]: 0.001,
+    [ItemType.Corpse]: 0.001,
+  },
+  [ItemType.Corpse]: {
+    [ItemType.Civilian]: 0,
+    [ItemType.Medic]: 0,
+    [ItemType.Zombie]: 0,
+    [ItemType.Corpse]: 0,
+  },
+});
 
 const gameTickRateMS = 16;
 
@@ -148,7 +202,9 @@ function fillBoardRandomly() {
   for (let i = 0; i < numCivilians.value; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * (boardHeight - graphHeight())),
+      y: Math.floor(
+        Math.random() * (boardHeight - graphHeight() - bodyScale - bodyScale)
+      ),
       velX: randomVel(),
       velY: randomVel(),
       value: ItemType.Civilian,
@@ -160,7 +216,9 @@ function fillBoardRandomly() {
   for (let i = 0; i < numZombies.value; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * (boardHeight - graphHeight())),
+      y: Math.floor(
+        Math.random() * (boardHeight - graphHeight() - bodyScale - bodyScale)
+      ),
       velX: randomVel(),
       velY: randomVel(),
       value: ItemType.Zombie,
@@ -172,7 +230,9 @@ function fillBoardRandomly() {
   for (let i = 0; i < numMedics.value; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * (boardHeight - graphHeight())),
+      y: Math.floor(
+        Math.random() * (boardHeight - graphHeight() - bodyScale - bodyScale)
+      ),
       velX: randomVel(),
       velY: randomVel(),
       value: ItemType.Medic,
@@ -184,7 +244,9 @@ function fillBoardRandomly() {
   for (let i = 0; i < numCorpses.value; i++) {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
-      y: Math.floor(Math.random() * (boardHeight - graphHeight())),
+      y: Math.floor(
+        Math.random() * (boardHeight - graphHeight() - bodyScale - bodyScale)
+      ),
       velX: randomVel(),
       velY: randomVel(),
       value: ItemType.Corpse,
@@ -283,26 +345,23 @@ function keepWithinBounds(item: Item) {
 // Find the center of mass of the other boids and adjust velocity slightly to
 // point towards the center of mass.
 function flyTowardsCenter(item: Item) {
-  let centeringFactor; // adjust velocity by this %
+  let centeringFactor = 0; // adjust velocity by this %
   let centerX = 0;
   let centerY = 0;
   let numNeighbors = 0;
 
-  switch (item.value) {
-    case ItemType.Zombie:
-      centeringFactor = zombieCenteringFactor.value;
-      break;
-    case ItemType.Medic:
-      centeringFactor = medicCenteringFactor.value;
-      break;
-    case ItemType.Civilian:
-    default:
-      centeringFactor = civilianCenteringFactor.value;
-      break;
-  }
-
   for (let otherItem of board) {
     if (distance(item, otherItem) < visualRange.value) {
+      centeringFactor = centeringFactors.value[item.value][otherItem.value];
+
+      // Civilians aren't attracted to zombies
+      if (
+        item.value === ItemType.Civilian &&
+        otherItem.value === ItemType.Zombie
+      ) {
+        continue;
+      }
+
       centerX += otherItem.x;
       centerY += otherItem.y;
       numNeighbors += 1;
@@ -343,6 +402,11 @@ function avoidOthers(item: Item) {
   let moveY = 0;
 
   for (let otherBoid of board) {
+    // Don't avoid corpses to prevent corpse walls
+    if (otherBoid.value === ItemType.Corpse) {
+      continue;
+    }
+
     if (otherBoid !== item) {
       if (distance(item, otherBoid) < minDistance) {
         moveX += item.x - otherBoid.x;
@@ -398,8 +462,16 @@ function matchVelocity(item: Item) {
 function limitSpeed(item: Item) {
   let speedLimit = 1;
 
-  if (item.value === ItemType.Zombie) {
-    speedLimit = 0.3;
+  switch (item.value) {
+    case ItemType.Civilian:
+      speedLimit = civilianSpeedLimit.value;
+      break;
+    case ItemType.Medic:
+      speedLimit = medicSpeedLimit.value;
+      break;
+    case ItemType.Zombie:
+      speedLimit = zombieSpeedLimit.value;
+      break;
   }
 
   const speed = Math.sqrt(item.velX * item.velX + item.velY * item.velY);
@@ -638,10 +710,26 @@ function updateCounts() {
 
             <ControlGroup label="Civilian Options">
               <ControlInput
-                label="Centering Factor"
-                title="How much the civilians will be pulled towards groups"
-                v-model="civilianCenteringFactor"
-                :min="0"
+                label="Civilian Attraction"
+                title="How much the civilians will be pulled towards civilians"
+                v-model="centeringFactors[ItemType.Civilian][ItemType.Civilian]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+              ></ControlInput>
+              <ControlInput
+                label="Medic Attraction"
+                title="How much the civilians will be pulled towards medics"
+                v-model="centeringFactors[ItemType.Civilian][ItemType.Medic]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+              ></ControlInput>
+              <ControlInput
+                label="Zombie Attraction"
+                title="How much the civilians will be pulled towards zombies"
+                v-model="centeringFactors[ItemType.Civilian][ItemType.Zombie]"
+                :min="-0.1"
                 :max="0.1"
                 :step="0.001"
               ></ControlInput>
@@ -668,14 +756,38 @@ function updateCounts() {
                 :max="0.1"
                 :step="0.001"
               ></ControlInput>
+              <ControlInput
+                label="Max Speed"
+                title="How fast civilians can move"
+                v-model="civilianSpeedLimit"
+                :min="0"
+                :max="2"
+                :step="0.001"
+              ></ControlInput>
             </ControlGroup>
 
             <ControlGroup label="Medic Options">
               <ControlInput
-                label="Centering Factor"
-                title="How much the medics will be pulled towards groups"
-                v-model="medicCenteringFactor"
-                :min="0"
+                label="Civilian Attraction"
+                title="How much the medics will be pulled towards civilians"
+                v-model="centeringFactors[ItemType.Medic][ItemType.Civilian]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+              ></ControlInput>
+              <ControlInput
+                label="Medic Attraction"
+                title="How much the medics will be pulled towards medics"
+                v-model="centeringFactors[ItemType.Medic][ItemType.Medic]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+              ></ControlInput>
+              <ControlInput
+                label="Zombie Attraction"
+                title="How much the medics will be pulled towards zombies"
+                v-model="centeringFactors[ItemType.Medic][ItemType.Zombie]"
+                :min="-0.1"
                 :max="0.1"
                 :step="0.001"
               ></ControlInput>
@@ -702,14 +814,38 @@ function updateCounts() {
                 :max="0.1"
                 :step="0.001"
               ></ControlInput>
+              <ControlInput
+                label="Max Speed"
+                title="How fast medic can move"
+                v-model="medicSpeedLimit"
+                :min="0"
+                :max="2"
+                :step="0.001"
+              ></ControlInput>
             </ControlGroup>
 
             <ControlGroup label="Zombie Options">
               <ControlInput
-                label="Centering Factor"
-                title="How much the zombies will be pulled towards groups"
-                v-model="zombieCenteringFactor"
-                :min="0"
+                label="Civilian Attraction"
+                title="How much the zombies will be pulled towards civilians"
+                v-model="centeringFactors[ItemType.Zombie][ItemType.Civilian]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+              ></ControlInput>
+              <ControlInput
+                label="Medic Attraction"
+                title="How much the zombies will be pulled towards medics"
+                v-model="centeringFactors[ItemType.Zombie][ItemType.Medic]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+              ></ControlInput>
+              <ControlInput
+                label="Zombie Attraction"
+                title="How much the zombies will be pulled towards zombies"
+                v-model="centeringFactors[ItemType.Zombie][ItemType.Zombie]"
+                :min="-0.1"
                 :max="0.1"
                 :step="0.001"
               ></ControlInput>
@@ -736,10 +872,14 @@ function updateCounts() {
                 :max="0.1"
                 :step="0.001"
               ></ControlInput>
-            </ControlGroup>
-
-            <ControlGroup label="Corpse Options">
-              <!--  -->
+              <ControlInput
+                label="Max Speed"
+                title="How fast zombies can move"
+                v-model="zombieSpeedLimit"
+                :min="0"
+                :max="2"
+                :step="0.001"
+              ></ControlInput>
             </ControlGroup>
           </div>
         </div>
@@ -823,11 +963,11 @@ canvas {
   right: 0;
   top: 0;
   z-index: 3;
-  height: 100%;
 }
 .controls-inner {
-  width: 24rem;
+  height: 100%;
   padding: 0.5rem;
+  width: 24rem;
 }
 .counts {
   font-size: 21px;
