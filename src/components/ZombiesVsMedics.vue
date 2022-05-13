@@ -10,13 +10,13 @@ enum ItemType {
 }
 
 const Colors = {
-  [ItemType.Corpse]: "#632",
-  [ItemType.Civilian]: "#999",
-  [ItemType.Zombie]: "#f00",
-  [ItemType.Medic]: "#0f0",
+  [ItemType.Corpse]: "hsla(0, 0%, 255%, 0.1)",
+  [ItemType.Civilian]: "#e8ff4f",
+  [ItemType.Zombie]: "#ff534f",
+  [ItemType.Medic]: "#57ffee",
 };
 
-const bgColor = "#000";
+const bgColor = "hsl(258, 57%, 10%)";
 
 interface Item {
   x: number;
@@ -784,15 +784,15 @@ canvas {
   z-index: 2;
 }
 .zombie-count {
-  color: #900;
+  color: var(--zombie-color);
 }
 .medic-count {
-  color: #0b0;
+  color: var(--medic-color);
 }
 .civilian-count {
-  color: #aaa;
+  color: var(--civilian-color);
 }
-.Corpse-count {
-  color: #632;
+.corpse-count {
+  color: var(--corpse-color);
 }
 </style>
