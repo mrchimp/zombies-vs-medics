@@ -66,6 +66,7 @@ interface CenteringFactors {
 const showControls = ref(false);
 
 const resolutionScale = ref(2);
+const graphHeight = ref(50);
 let graphTickCount = 0;
 
 const numCorpses = ref(0);
@@ -100,8 +101,8 @@ const centeringFactors = ref<CenteringFactors>({
   [ItemType.Civilian]: {
     [ItemType.Civilian]: 0.001,
     [ItemType.Medic]: 0.001,
-    [ItemType.Zombie]: -0.001,
-    [ItemType.Corpse]: 0,
+    [ItemType.Zombie]: -0.002,
+    [ItemType.Corpse]: -0.001,
   },
   [ItemType.Zombie]: {
     [ItemType.Civilian]: 0.001,
@@ -113,7 +114,7 @@ const centeringFactors = ref<CenteringFactors>({
     [ItemType.Civilian]: 0.001,
     [ItemType.Medic]: 0.001,
     [ItemType.Zombie]: 0.001,
-    [ItemType.Corpse]: 0.001,
+    [ItemType.Corpse]: 0.002,
   },
   [ItemType.Corpse]: {
     [ItemType.Civilian]: 0,
@@ -190,10 +191,6 @@ function updateScale() {
   ctx.canvas.height = boardHeight;
 }
 
-function graphHeight() {
-  return 50;
-}
-
 function randomVel() {
   return Math.random() * 2 - 1;
 }
@@ -203,7 +200,8 @@ function fillBoardRandomly() {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
       y: Math.floor(
-        Math.random() * (boardHeight - graphHeight() - bodyScale - bodyScale)
+        Math.random() *
+          (boardHeight - graphHeight.value - bodyScale - bodyScale)
       ),
       velX: randomVel(),
       velY: randomVel(),
@@ -217,7 +215,8 @@ function fillBoardRandomly() {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
       y: Math.floor(
-        Math.random() * (boardHeight - graphHeight() - bodyScale - bodyScale)
+        Math.random() *
+          (boardHeight - graphHeight.value - bodyScale - bodyScale)
       ),
       velX: randomVel(),
       velY: randomVel(),
@@ -231,7 +230,8 @@ function fillBoardRandomly() {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
       y: Math.floor(
-        Math.random() * (boardHeight - graphHeight() - bodyScale - bodyScale)
+        Math.random() *
+          (boardHeight - graphHeight.value - bodyScale - bodyScale)
       ),
       velX: randomVel(),
       velY: randomVel(),
@@ -245,7 +245,8 @@ function fillBoardRandomly() {
     board.push({
       x: Math.floor(Math.random() * boardWidth),
       y: Math.floor(
-        Math.random() * (boardHeight - graphHeight() - bodyScale - bodyScale)
+        Math.random() *
+          (boardHeight - graphHeight.value - bodyScale - bodyScale)
       ),
       velX: randomVel(),
       velY: randomVel(),
@@ -258,7 +259,7 @@ function fillBoardRandomly() {
 
 function clearBoard() {
   ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, boardWidth, boardHeight - graphHeight());
+  ctx.fillRect(0, 0, boardWidth, boardHeight - graphHeight.value);
 }
 
 function drawBoard() {
@@ -283,12 +284,12 @@ function drawGraph() {
   graphTickCount = (graphTickCount + 1) % boardWidth;
 
   let total = totalEntities();
-  let y = boardHeight - graphHeight();
+  let y = boardHeight - graphHeight.value;
   const counts = countItems();
-  let civilianHeight = (counts[ItemType.Civilian] / total) * 100;
-  let medicHeight = (counts[ItemType.Medic] / total) * 100;
-  let CorpseHeight = (counts[ItemType.Corpse] / total) * 100;
-  let zombieHeight = (counts[ItemType.Zombie] / total) * 100;
+  let civilianHeight = (counts[ItemType.Civilian] / total) * graphHeight.value;
+  let medicHeight = (counts[ItemType.Medic] / total) * graphHeight.value;
+  let CorpseHeight = (counts[ItemType.Corpse] / total) * graphHeight.value;
+  let zombieHeight = (counts[ItemType.Zombie] / total) * graphHeight.value;
 
   ctx.fillStyle = Colors[ItemType.Corpse];
   ctx.fillRect(graphTickCount, y, 1, CorpseHeight);
@@ -337,7 +338,7 @@ function keepWithinBounds(item: Item) {
   if (item.y < margin) {
     item.velY += turnFactor;
   }
-  if (item.y > boardHeight - graphHeight() - margin) {
+  if (item.y > boardHeight - graphHeight.value - margin) {
     item.velY -= turnFactor;
   }
 }
@@ -699,6 +700,13 @@ function updateCounts() {
                 :max="10"
                 @input="reset"
               ></ControlInput>
+              <ControlInput
+                label="Graph Height"
+                v-model="graphHeight"
+                :min="0"
+                :max="500"
+                @input="reset"
+              ></ControlInput>
             </ControlGroup>
 
             <hr />
@@ -734,6 +742,15 @@ function updateCounts() {
                 label="Zombie Attraction"
                 title="How much the civilians will be pulled towards zombies"
                 v-model="centeringFactors[ItemType.Civilian][ItemType.Zombie]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+                type="civilian"
+              ></ControlInput>
+              <ControlInput
+                label="Corpse Attraction"
+                title="How much the civilians will be pulled towards corpses"
+                v-model="centeringFactors[ItemType.Civilian][ItemType.Corpse]"
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
@@ -805,6 +822,15 @@ function updateCounts() {
                 type="medic"
               ></ControlInput>
               <ControlInput
+                label="Corpse Attraction"
+                title="How much the medics will be pulled towards corpses"
+                v-model="centeringFactors[ItemType.Medic][ItemType.Corpse]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+                type="medic"
+              ></ControlInput>
+              <ControlInput
                 label="Min Distance"
                 title="How close medics are allowed to be to others"
                 v-model="medicMinDistance"
@@ -864,6 +890,15 @@ function updateCounts() {
                 label="Zombie Attraction"
                 title="How much the zombies will be pulled towards zombies"
                 v-model="centeringFactors[ItemType.Zombie][ItemType.Zombie]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+                type="zombie"
+              ></ControlInput>
+              <ControlInput
+                label="Corpse Attraction"
+                title="How much the zombies will be pulled towards corpses"
+                v-model="centeringFactors[ItemType.Zombie][ItemType.Corpse]"
                 :min="-0.1"
                 :max="0.1"
                 :step="0.001"
