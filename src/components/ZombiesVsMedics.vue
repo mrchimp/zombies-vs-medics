@@ -228,20 +228,20 @@ function drawGraph() {
   let CorpseHeight = (counts[ItemType.Corpse] / total) * 100;
   let zombieHeight = (counts[ItemType.Zombie] / total) * 100;
 
-  ctx.fillStyle = Colors[ItemType.Civilian];
-  ctx.fillRect(graphTickCount, y, 1, civilianHeight);
+  ctx.fillStyle = Colors[ItemType.Corpse];
+  ctx.fillRect(graphTickCount, y, 1, CorpseHeight);
 
-  y += civilianHeight;
+  y += CorpseHeight;
 
   ctx.fillStyle = Colors[ItemType.Medic];
   ctx.fillRect(graphTickCount, y, 1, medicHeight);
 
   y += medicHeight;
 
-  ctx.fillStyle = Colors[ItemType.Corpse];
-  ctx.fillRect(graphTickCount, y, 1, CorpseHeight);
+  ctx.fillStyle = Colors[ItemType.Civilian];
+  ctx.fillRect(graphTickCount, y, 1, civilianHeight);
 
-  y += CorpseHeight;
+  y += civilianHeight;
 
   ctx.fillStyle = Colors[ItemType.Zombie];
   ctx.fillRect(graphTickCount, y, 1, zombieHeight);
