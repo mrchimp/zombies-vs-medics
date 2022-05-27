@@ -8,6 +8,7 @@ enum ItemType {
   Civilian = 1,
   Zombie = 2,
   Medic = 3,
+  Sniper = 4,
 }
 
 const Colors = {
@@ -15,6 +16,7 @@ const Colors = {
   [ItemType.Civilian]: "#e8ff4f",
   [ItemType.Zombie]: "#ff534f",
   [ItemType.Medic]: "#67adfe",
+  [ItemType.Sniper]: "#00aa44",
 };
 
 const bgColor = "hsl(258, 57%, 10%)";
@@ -27,6 +29,7 @@ interface Item {
   value: ItemType;
   cooldown: number;
   training: number;
+  int: number;
 }
 
 interface Nearbys {
@@ -34,6 +37,7 @@ interface Nearbys {
   [ItemType.Civilian]: number;
   [ItemType.Zombie]: number;
   [ItemType.Medic]: number;
+  [ItemType.Sniper]: number;
 }
 
 interface CenteringFactors {
@@ -42,24 +46,35 @@ interface CenteringFactors {
     [ItemType.Medic]: ItemType;
     [ItemType.Zombie]: ItemType;
     [ItemType.Corpse]: ItemType;
+    [ItemType.Sniper]: ItemType;
   };
   [ItemType.Zombie]: {
     [ItemType.Civilian]: ItemType;
     [ItemType.Medic]: ItemType;
     [ItemType.Zombie]: ItemType;
     [ItemType.Corpse]: ItemType;
+    [ItemType.Sniper]: ItemType;
   };
   [ItemType.Medic]: {
     [ItemType.Civilian]: ItemType;
     [ItemType.Medic]: ItemType;
     [ItemType.Zombie]: ItemType;
     [ItemType.Corpse]: ItemType;
+    [ItemType.Sniper]: ItemType;
   };
   [ItemType.Corpse]: {
     [ItemType.Civilian]: ItemType;
     [ItemType.Medic]: ItemType;
     [ItemType.Zombie]: ItemType;
     [ItemType.Corpse]: ItemType;
+    [ItemType.Sniper]: ItemType;
+  };
+  [ItemType.Sniper]: {
+    [ItemType.Civilian]: ItemType;
+    [ItemType.Medic]: ItemType;
+    [ItemType.Zombie]: ItemType;
+    [ItemType.Corpse]: ItemType;
+    [ItemType.Sniper]: ItemType;
   };
 }
 
@@ -97,30 +112,50 @@ const zombieAvoidFactor = ref(0.03);
 const zombieVelocityMatchingFactor = ref(0.01);
 const zombieSpeedLimit = ref(0.4);
 
+const numSnipers = ref(0);
+const sniperCount = ref(0);
+const sniperFontSize = ref("");
+const sniperMinDistance = ref(4);
+const sniperAvoidFactor = ref(0.03);
+const sniperVelocityMatchingFactor = ref(0.005);
+const sniperSpeedLimit = ref(0.8);
+const sniperIntLimit = ref(100);
+
 const centeringFactors = ref<CenteringFactors>({
   [ItemType.Civilian]: {
     [ItemType.Civilian]: 0.001,
     [ItemType.Medic]: 0.001,
     [ItemType.Zombie]: -0.002,
     [ItemType.Corpse]: -0.001,
+    [ItemType.Sniper]: 0.001,
   },
   [ItemType.Zombie]: {
     [ItemType.Civilian]: 0.001,
     [ItemType.Medic]: 0.001,
     [ItemType.Zombie]: 0.001,
     [ItemType.Corpse]: 0.001,
+    [ItemType.Sniper]: 0.001,
   },
   [ItemType.Medic]: {
     [ItemType.Civilian]: 0.001,
     [ItemType.Medic]: 0.001,
     [ItemType.Zombie]: 0.001,
     [ItemType.Corpse]: 0.002,
+    [ItemType.Sniper]: 0.001,
   },
   [ItemType.Corpse]: {
     [ItemType.Civilian]: 0,
     [ItemType.Medic]: 0,
     [ItemType.Zombie]: 0,
     [ItemType.Corpse]: 0,
+    [ItemType.Sniper]: 0,
+  },
+  [ItemType.Sniper]: {
+    [ItemType.Civilian]: 0.001,
+    [ItemType.Medic]: 0.001,
+    [ItemType.Zombie]: -0.002,
+    [ItemType.Corpse]: -0.001,
+    [ItemType.Sniper]: 0.001,
   },
 });
 
@@ -208,6 +243,7 @@ function fillBoardRandomly() {
       value: ItemType.Civilian,
       cooldown: 0,
       training: 0,
+      int: 0,
     });
   }
 
@@ -223,6 +259,7 @@ function fillBoardRandomly() {
       value: ItemType.Zombie,
       cooldown: 0,
       training: 0,
+      int: 0,
     });
   }
 
@@ -238,6 +275,7 @@ function fillBoardRandomly() {
       value: ItemType.Medic,
       cooldown: 0,
       training: 100,
+      int: 0,
     });
   }
 
@@ -253,6 +291,7 @@ function fillBoardRandomly() {
       value: ItemType.Corpse,
       cooldown: 2000,
       training: 0,
+      int: 0,
     });
   }
 }
@@ -513,6 +552,9 @@ function loop() {
       case ItemType.Zombie:
         updateZombie(item, nearbys);
         break;
+      case ItemType.Sniper:
+        updateSniper(item, nearbys);
+        break;
     }
   });
 
@@ -548,6 +590,16 @@ function updateCivilian(item: Item, nearbys: Nearbys): void {
     return;
   }
 
+  if (nearbys[ItemType.Civilian] > 0) {
+    item.int++;
+  }
+
+  if (item.int > 100) {
+    console.log("Sniper!");
+    item.value = ItemType.Sniper;
+    return;
+  }
+
   // If there are zombies but not enough civilians, you got got
   if (nearbys[ItemType.Zombie] > 0) {
     item.value = ItemType.Corpse;
@@ -577,12 +629,17 @@ function updateZombie(item: Item, nearbys: Nearbys) {
   }
 }
 
+function updateSniper(item: Item, nearbys: Nearbys) {
+  //
+}
+
 function countNearby(item: Item) {
   const results = {
     [ItemType.Civilian]: 0,
     [ItemType.Zombie]: 0,
     [ItemType.Corpse]: 0,
     [ItemType.Medic]: 0,
+    [ItemType.Sniper]: 0,
     null: 0,
   };
 
@@ -608,6 +665,7 @@ function countItems() {
     [ItemType.Medic]: 0,
     [ItemType.Zombie]: 0,
     [ItemType.Corpse]: 0,
+    [ItemType.Sniper]: 0,
   };
 
   board.forEach((item) => {
@@ -632,6 +690,9 @@ function updateCounts() {
 
   medicCount.value = counts[ItemType.Medic];
   medicFontSize.value = `${20 + counts[ItemType.Medic] / scaleFactor}px`;
+
+  sniperCount.value = counts[ItemType.Sniper];
+  sniperFontSize.value = `${20 + counts[ItemType.Sniper] / scaleFactor}px`;
 }
 </script>
 
@@ -940,6 +1001,80 @@ function updateCounts() {
                 type="zombie"
               ></ControlInput>
             </ControlGroup>
+
+            <ControlGroup label="Sniper Options">
+              <ControlInput
+                label="Civilian Attraction"
+                title="How much the snipers will be pulled towards civilians"
+                v-model="centeringFactors[ItemType.Sniper][ItemType.Civilian]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+                type="sniper"
+              ></ControlInput>
+              <ControlInput
+                label="Medic Attraction"
+                title="How much the snipers will be pulled towards medics"
+                v-model="centeringFactors[ItemType.Sniper][ItemType.Medic]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+                type="sniper"
+              ></ControlInput>
+              <ControlInput
+                label="Zombie Attraction"
+                title="How much the snipers will be pulled towards zombies"
+                v-model="centeringFactors[ItemType.Sniper][ItemType.Zombie]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+                type="sniper"
+              ></ControlInput>
+              <ControlInput
+                label="Corpse Attraction"
+                title="How much the snipers will be pulled towards corpses"
+                v-model="centeringFactors[ItemType.Sniper][ItemType.Corpse]"
+                :min="-0.1"
+                :max="0.1"
+                :step="0.001"
+                type="sniper"
+              ></ControlInput>
+              <ControlInput
+                label="Min Distance"
+                title="How close snipers are allowed to be to others"
+                v-model="zombieMinDistance"
+                :min="0"
+                :max="20"
+                type="sniper"
+              ></ControlInput>
+              <ControlInput
+                label="Avoid Factor"
+                title="How actively snipers try to avoid being too close to each other"
+                v-model="zombieAvoidFactor"
+                :min="0"
+                :max="0.1"
+                :step="0.001"
+                type="sniper"
+              ></ControlInput>
+              <ControlInput
+                label="Velocity Matching"
+                title="How much snipers will try to match the velocity of others"
+                v-model="zombieVelocityMatchingFactor"
+                :min="0"
+                :max="0.1"
+                :step="0.001"
+                type="sniper"
+              ></ControlInput>
+              <ControlInput
+                label="Max Speed"
+                title="How fast snipers can move"
+                v-model="sniperSpeedLimit"
+                :min="0"
+                :max="2"
+                :step="0.001"
+                type="sniper"
+              ></ControlInput>
+            </ControlGroup>
           </div>
         </div>
       </div>
@@ -977,6 +1112,14 @@ function updateCounts() {
         }"
       >
         {{ civilianCount }} civilians
+      </div>
+      <div
+        class="count sniper-count"
+        :style="{
+          'font-size': sniperFontSize,
+        }"
+      >
+        {{ sniperCount }} snipers
       </div>
     </div>
   </div>
@@ -1052,5 +1195,8 @@ canvas {
 }
 .corpse-count {
   color: var(--corpse-color);
+}
+.sniper-count {
+  color: var(--sniper-color);
 }
 </style>
